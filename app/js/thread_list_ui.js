@@ -271,7 +271,10 @@ var ThreadListUI = {
               draftId: +parentThreadId
             });
           } else {
-            window.open('thread.html?id=' + parentThreadId, '', 'mozhaidasheet');
+            var thread = window.open('thread.html', '', 'mozhaidasheet');
+            thread.onload = function() {
+              thread.postMessage(parentThreadId, window.location.origin);
+            };
           }
         }
 

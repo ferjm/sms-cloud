@@ -5,15 +5,13 @@
 'use strict';
 
 var loaded = function() {
-  var id = document.location.search.replace('?id=', '');
-  if (id) {
-    MessageManager.init();
-    ThreadUI.init();
-    window.setTimeout(function() {
-      ThreadUI.renderMessages(parseInt(id));
-    }, 100);
-  }
+  MessageManager.init();
+  ThreadUI.init();
   window.removeEventListener('load', loaded);
 };
+
+window.addEventListener('message', function(message) {
+  ThreadUI.renderMessages(parseInt(message.data));
+});
 
 window.addEventListener('load', loaded);
