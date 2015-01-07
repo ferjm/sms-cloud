@@ -690,8 +690,7 @@ var Compose = (function() {
       disableSendMessage = disableSendMessage || !messageNotLong;
 
       // should disable if we have no recipients in the "new thread" view
-      disableSendMessage = disableSendMessage ||
-        (Navigation.isCurrentPanel('composer') && !hasRecipients);
+      disableSendMessage = disableSendMessage || !hasRecipients;
 
       this.disable(disableSendMessage);
     },

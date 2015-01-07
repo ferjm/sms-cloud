@@ -590,37 +590,20 @@ var ThreadUI = {
     // to slide correctly. Bug 1009541
     this.cancelEdit();
 
-    if (Navigation.isCurrentPanel('thread')) {
-      // Revoke thumbnail URL for every image attachment rendered within thread
-      var nodes = this.container.querySelectorAll(
-        '.attachment-container[data-thumbnail]'
-      );
-      Array.from(nodes).forEach(function(node) {
-        window.URL.revokeObjectURL(node.dataset.thumbnail);
-      });
-    }
+    // Revoke thumbnail URL for every image attachment rendered within thread
+    var nodes = this.container.querySelectorAll(
+      '.attachment-container[data-thumbnail]'
+    );
+    Array.from(nodes).forEach(function(node) {
+      window.URL.revokeObjectURL(node.dataset.thumbnail);
+    });
 
     // TODO move most of back() here: Bug 1010223
   },
 
   afterLeave: function thui_afterLeave(args) {
-    if (Navigation.isCurrentPanel('thread-list')) {
-      this.container.textContent = '';
-      this.cleanFields();
-      Threads.currentId = null;
-    }
-    if (!Navigation.isCurrentPanel('composer')) {
-      this.threadMessages.classList.remove('new');
-
-      this.recipients.length = 0;
-
-      this.toggleRecipientSuggestions();
-    }
-
-    if (!Navigation.isCurrentPanel('thread')) {
-      this.threadMessages.classList.remove('has-carrier');
-      this.callNumberButton.classList.add('hide');
-    }
+    this.threadMessages.classList.remove('has-carrier');
+    this.callNumberButton.classList.add('hide');
   },
 
   handleForward: function thui_handleForward(forward) {
@@ -799,13 +782,7 @@ var ThreadUI = {
   },
 
   isCurrentThread: function thui_isCurrentThread(threadId) {
-    return Navigation.isCurrentPanel('thread', { id: threadId }) ||
-      Navigation.isCurrentPanel('report-view', {
-        threadId: threadId
-      }) ||
-      Navigation.isCurrentPanel('group-view', {
-        id: threadId
-      });
+    return true;
   },
 
   onMessageReceived: function thui_onMessageReceived(e) {
@@ -832,7 +809,6 @@ var ThreadUI = {
       this.forceScrollViewToBottom();
     } else {
       if (this.shouldChangePanelNextEvent) {
-        Navigation.toPanel('thread', { id: message.threadId });
         this.shouldChangePanelNextEvent = false;
       }
     }
@@ -989,8 +965,7 @@ var ThreadUI = {
 
   scrollViewToBottom: function thui_scrollViewToBottom() {
     if (!this.isScrolledManually &&
-        this.container.lastElementChild &&
-        Navigation.isCurrentPanel('thread')) {
+        this.container.lastElementChild) {
       this.container.lastElementChild.scrollIntoView(false);
     }
   },
@@ -1042,22 +1017,7 @@ var ThreadUI = {
   },
 
   back: function thui_back() {
-    if (Navigation.isCurrentPanel('group-view') ||
-        Navigation.isCurrentPanel('report-view')) {
-      Navigation.toPanel('thread', { id: Threads.currentId });
-      this.updateHeaderData();
-
-      return Promise.resolve();
-    }
-
-    return this._onNavigatingBack().then(function() {
-      this.cleanFields();
-      Navigation.toPanel('thread-list');
-    }.bind(this)).catch(function(e) {
-      e && console.error('Unexpected error while navigating back: ', e);
-
-      return Promise.reject(e);
-    });
+    window.close();
   },
 
   _onNavigatingBack: function() {
@@ -1713,12 +1673,10 @@ var ThreadUI = {
     params.items.push(subjectItem);
 
     // If we are on a thread, we can call to SelectMessages
-    if (Navigation.isCurrentPanel('thread')) {
-      params.items.push({
-        l10nId: 'selectMessages-label',
-        method: this.startEdit.bind(this)
-      });
-    }
+    params.items.push({
+      l10nId: 'selectMessages-label',
+      method: this.startEdit.bind(this)
+    });
 
     // Last item is the Cancel button
     params.items.push({
@@ -1970,20 +1928,6 @@ var ThreadUI = {
           items:[]
         };
 
-        if (!lineClassList.contains('not-downloaded')) {
-          params.items.push({
-            l10nId: 'forward',
-            method: function forwardMessage(messageId) {
-              Navigation.toPanel('composer', {
-                forward: {
-                  messageId: messageId
-                }
-              });
-            },
-            params: [messageId]
-          });
-        }
-
         params.items.push(
           {
             l10nId: 'select-text',
@@ -1997,13 +1941,6 @@ var ThreadUI = {
           {
             l10nId: 'view-message-report',
             method: function showMessageReport(messageId) {
-              // Fetch the message by id for displaying corresponding message
-              // report. threadId here is to make sure thread is updatable
-              // when current view report panel.
-              Navigation.toPanel('report-view', {
-                id: messageId,
-                threadId: Threads.currentId
-              });
             },
             params: [messageId]
           },
@@ -2092,7 +2029,7 @@ var ThreadUI = {
         serviceId = opts.serviceId === undefined ? null : opts.serviceId,
         recipients;
 
-    var inComposer = Navigation.isCurrentPanel('composer');
+    var inComposer = false;
 
     // Depending where we are, we get different nums
     if (inComposer) {
@@ -2155,7 +2092,6 @@ var ThreadUI = {
 
       if (recipients.length > 1) {
         this.shouldChangePanelNextEvent = false;
-        Navigation.toPanel('thread-list');
         if (ActivityHandler.isInActivity()) {
           setTimeout(this.close.bind(this), this.LEAVE_ACTIVITY_DELAY);
         }
@@ -2576,17 +2512,11 @@ var ThreadUI = {
 
   onHeaderActivation: function thui_onHeaderActivation() {
     // Do nothing while in participants list view.
-    if (!Navigation.isCurrentPanel('thread')) {
-      return;
-    }
 
     var participants = Threads.active && Threads.active.participants;
 
     // >1 Participants will enter "group view"
     if (participants && participants.length > 1) {
-      Navigation.toPanel('group-view', {
-        id: Threads.currentId
-      });
       return;
     }
 
@@ -2657,9 +2587,6 @@ var ThreadUI = {
 
   prompt: function thui_prompt(opt) {
     var complete = (function complete() {
-      if (!Navigation.isCurrentPanel('thread')) {
-        Navigation.toPanel('thread', { id: Threads.currentId });
-      }
     }).bind(this);
 
     var thread = Threads.get(Threads.currentId);
@@ -2795,9 +2722,7 @@ var ThreadUI = {
   onCreateContact: function thui_onCreateContact() {
     ThreadListUI.updateContactsInfo();
     // Update Header if needed
-    if (Navigation.isCurrentPanel('thread')) {
-      ThreadUI.updateHeaderData();
-    }
+    ThreadUI.updateHeaderData();
   },
 
   discardDraft: function thui_discardDraft() {
