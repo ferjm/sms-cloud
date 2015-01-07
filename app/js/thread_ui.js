@@ -501,19 +501,12 @@ var ThreadUI = {
     }
   },
 
-  beforeEnterThread: function thui_beforeEnterThread(args) {
+  beforeEnterThread: function thui_beforeEnterThread(thread) {
     // TODO should we implement hooks to Navigation so that Threads could
     // get an event whenever the panel changes?
-    Threads.currentId = args.id;
-
-    var prevPanel = args.meta.prev && args.meta.prev.panel;
-
-    if (prevPanel !== 'group-view' && prevPanel !== 'report-view') {
-      this.initializeRendering();
-    }
 
     // Call button should be shown only for non-email single-participant thread
-    if (Threads.active.participants.length === 1 &&
+    if (thread.participants.length === 1 &&
         (!Settings.supportEmailRecipient ||
          !Utils.isEmailAddress(Threads.active.participants[0]))) {
       this.callNumberButton.classList.remove('hide');
@@ -556,28 +549,23 @@ var ThreadUI = {
   },
 
   afterEnterThread: function thui_afterEnterThread(args) {
-    var threadId = +args.id;
+    var threadId = +args.thread.id;
 
-    var prevPanel = args.meta.prev && args.meta.prev.panel;
 
-    if (prevPanel !== 'group-view' && prevPanel !== 'report-view') {
-      this.renderMessages(threadId);
+    this.renderMessages(threadId);
 
-      // Populate draft if there is one
-      // TODO merge with handleDraft ? Bug 1010216
-      Drafts.request().then(function() {
-        var thread = Threads.get(threadId);
-        if (thread.hasDrafts) {
-          this.draft = thread.drafts.latest;
-          Compose.fromDraft(this.draft);
-          this.draft.isEdited = false;
-        } else {
-          this.draft = null;
-        }
-      });
-    }
-
-    ThreadListUI.mark(threadId, 'read');
+    // Populate draft if there is one
+    // TODO merge with handleDraft ? Bug 1010216
+    Drafts.request().then(function() {
+      var thread = args.thread;
+      if (thread.hasDrafts) {
+        this.draft = thread.drafts.latest;
+        Compose.fromDraft(this.draft);
+        this.draft.isEdited = false;
+      } else {
+        this.draft = null;
+      }
+    });
 
     // nothing urgent, let's do it when the main thread has some time
     setTimeout(MessageManager.markThreadRead.bind(MessageManager, threadId));
@@ -725,9 +713,6 @@ var ThreadUI = {
     var node = this.recipientsList.lastChild;
     var typed;
 
-    if (!isNew || node === null) {
-      return;
-    }
 
     // Ensure that Recipients does not trigger focus
     // on itself, which will cause the cursor to "jump"
@@ -1240,14 +1225,14 @@ var ThreadUI = {
   },
 
   // Method for updating the header with the info retrieved from Contacts API
-  updateHeaderData: function thui_updateHeaderData() {
-    var thread, number;
-
-    thread = Threads.active;
+  updateHeaderData: function thui_updateHeaderData(thread) {
+    var number;
 
     if (!thread) {
       return Promise.resolve();
     }
+
+    console.debug(thread);
 
     number = thread.participants[0];
 
@@ -1255,31 +1240,22 @@ var ThreadUI = {
     this.headerText.dataset.number = number;
 
     return new Promise(function(resolve, reject) {
-      Contacts.findByAddress(number, function gotContact(contacts) {
-        // For the basic display, we only need the first contact's information
-        // e.g. for 3 contacts, the app displays:
-        //
-        //    Jane Doe (+2)
-        //
-        var details = Utils.getContactDetails(number, contacts);
-        // Bug 867948: contacts null is a legitimate case, and
-        // getContactDetails is okay with that.
-        var contactName = details.title || number;
-        this.headerText.dataset.isContact = !!details.isContact;
-        this.headerText.dataset.title = contactName;
+      // Bug 867948: contacts null is a legitimate case, and
+      // getContactDetails is okay with that.
+      var contactName = number;
+      this.headerText.dataset.isContact = false;
+      this.headerText.dataset.title = number;
 
-        this.headerText.classList.toggle(
-          'thread-group-header',
-          thread.participants.length > 1
-        );
-        this.setHeaderContent(this.tmpl.header.interpolate({
-          name: contactName,
-          participantCount: (thread.participants.length - 1).toString()
-        }));
+      this.headerText.classList.toggle(
+        'thread-group-header',
+        thread.participants.length > 1
+      );
+      this.setHeaderContent(this.tmpl.header.interpolate({
+        name: contactName,
+        participantCount: (thread.participants.length - 1).toString()
+      }));
 
-        this.updateCarrier(thread, contacts);
-        resolve();
-      }.bind(this));
+      resolve();
     }.bind(this));
   },
 

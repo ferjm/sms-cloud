@@ -11,7 +11,9 @@ var loaded = function() {
 };
 
 window.addEventListener('message', function(message) {
-  ThreadUI.renderMessages(parseInt(message.data));
+  var thread = JSON.parse(message.data);
+  ThreadUI.updateHeaderData(thread);
+  ThreadUI.afterEnterThread({thread: thread, meta: null});
 });
 
 window.addEventListener('load', loaded);

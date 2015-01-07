@@ -669,7 +669,7 @@ var Compose = (function() {
        * property */
       var recipients = ThreadUI.recipients;
       var recipientsValue = recipients.inputValue;
-      var hasRecipients = false;
+      var hasRecipients = true;
 
       // Set hasRecipients to true based on the following conditions:
       //
