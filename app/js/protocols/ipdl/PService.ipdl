@@ -1,0 +1,8 @@
+
+protocol PService
+{
+  serviceworker:
+    ApplyUpdate(updatedFiles);
+
+  window:
+};

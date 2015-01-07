@@ -1,0 +1,9 @@
+
+protocol PUpdate
+{
+  worker:
+    CheckForUpdate();
+    ApplyUpdate(updateUrl);
+
+  window:
+};
