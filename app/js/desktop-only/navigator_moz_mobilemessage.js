@@ -9,9 +9,6 @@
 
 *********************************************************** */
 (function(window) {
-  if (navigator.mozMobileMessage) {
-    return;
-  }
 
   var MockNavigatormozMobileMessage = {};
 
@@ -1598,6 +1595,7 @@
     return request;
   };
 
-  navigator.mozMobileMessage = MockNavigatormozMobileMessage;
+  //navigator.mozMobileMessage = MockNavigatormozMobileMessage;
+  window.MockNavigatormozMobileMessage = MockNavigatormozMobileMessage;
 
 }(window));
