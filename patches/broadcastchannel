@@ -1,0 +1,1654 @@
+# HG changeset patch
+# Parent 350fcc3df5292c57bb9df9de271fa3a13916a030
+# User Vivien Nicolas <vnicolas@mozilla.com>
+Bug 966439 - [BroadcastChannel] patch 1 - BroadcastChannel for main-thread, r=smaug
+
+diff --git a/dom/broadcastchannel/BroadcastChannel.cpp b/dom/broadcastchannel/BroadcastChannel.cpp
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannel.cpp
+@@ -0,0 +1,429 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#include "BroadcastChannel.h"
++#include "BroadcastChannelChild.h"
++#include "mozilla/dom/BroadcastChannelBinding.h"
++#include "mozilla/dom/WorkerPrivate.h"
++#include "mozilla/dom/WorkerRunnable.h"
++#include "mozilla/ipc/BackgroundChild.h"
++#include "mozilla/ipc/PBackgroundChild.h"
++
++#include "nsIAppsService.h"
++#include "nsIDocument.h"
++#include "nsIScriptSecurityManager.h"
++#include "nsServiceManagerUtils.h"
++#include "nsISupportsPrimitives.h"
++
++using namespace mozilla::dom::workers;
++
++namespace mozilla {
++namespace dom {
++
++namespace {
++
++void
++GetOrigin(nsIPrincipal* aPrincipal, nsAString& aOrigin, ErrorResult& aRv)
++{
++  MOZ_ASSERT(aPrincipal);
++
++  uint16_t appStatus = aPrincipal->GetAppStatus();
++
++  if (appStatus == nsIPrincipal::APP_STATUS_NOT_INSTALLED) {
++    nsAutoString tmp;
++    aRv = nsContentUtils::GetUTFOrigin(aPrincipal, tmp);
++    if (NS_WARN_IF(aRv.Failed())) {
++      return;
++    }
++
++    aOrigin = tmp;
++    return;
++  }
++
++  uint32_t appId = aPrincipal->GetAppId();
++
++  // If we are in "app code", use manifest URL as unique origin since
++  // multiple apps can share the same origin but not same broadcast messages.
++  nsresult rv;
++  nsCOMPtr<nsIAppsService> appsService =
++    do_GetService("@mozilla.org/AppsService;1", &rv);
++  if (NS_WARN_IF(NS_FAILED(rv))) {
++    aRv.Throw(rv);
++    return;
++  }
++
++  appsService->GetManifestURLByLocalId(appId, aOrigin);
++}
++
++class InitializeRunnable MOZ_FINAL : public WorkerMainThreadRunnable
++{
++public:
++  InitializeRunnable(nsAString& aOrigin, ErrorResult& aRv)
++    : WorkerMainThreadRunnable(GetCurrentThreadWorkerPrivate())
++    , mWorkerPrivate(GetCurrentThreadWorkerPrivate())
++    , mOrigin(aOrigin)
++    , mRv(aRv)
++  {
++    MOZ_ASSERT(mWorkerPrivate);
++  }
++
++  bool MainThreadRun() MOZ_OVERRIDE
++  {
++    MOZ_ASSERT(NS_IsMainThread());
++    GetOrigin(mWorkerPrivate->GetPrincipal(), mOrigin, mRv);
++    return true;
++  }
++
++private:
++  WorkerPrivate* mWorkerPrivate;
++  nsAString& mOrigin;
++  ErrorResult& mRv;
++};
++
++class PostMessageRunnable : public nsCancelableRunnable
++{
++public:
++  PostMessageRunnable(BroadcastChannelChild* aActor,
++                      const nsAString& aMessage)
++    : mActor(aActor)
++    , mMessage(aMessage)
++  {
++  }
++
++  NS_IMETHODIMP Run()
++  {
++    mActor->SendPostMessage(mMessage);
++    return NS_OK;
++  }
++
++private:
++  nsRefPtr<BroadcastChannelChild> mActor;
++  nsString mMessage;
++};
++
++class TeardownRunnable : public nsCancelableRunnable
++{
++public:
++  TeardownRunnable(BroadcastChannelChild* aActor)
++    : mActor(aActor)
++  {
++  }
++
++  NS_IMETHODIMP Run()
++  {
++    mActor->SendShutdown();
++    return NS_OK;
++  }
++
++private:
++  nsRefPtr<BroadcastChannelChild> mActor;
++};
++
++class BroadcastChannelFeature : public workers::WorkerFeature
++{
++  BroadcastChannel* mChannel;
++
++public:
++  BroadcastChannelFeature(BroadcastChannel* aChannel)
++    : mChannel(aChannel)
++  {
++    MOZ_ASSERT(aChannel);
++  }
++
++  virtual bool Notify(JSContext* aCx, workers::Status aStatus) MOZ_OVERRIDE
++  {
++    if (aStatus >= Canceling) {
++      WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
++      MOZ_ASSERT(workerPrivate);
++
++      workerPrivate->RemoveFeature(workerPrivate->GetJSContext(), this);
++      mChannel->Shutdown();
++    }
++
++    return true;
++  }
++};
++
++} // anonymous namespace
++
++BroadcastChannel::BroadcastChannel(nsPIDOMWindow* aWindow,
++                                   const nsAString& aChannel,
++                                   const nsAString& aOrigin)
++  : DOMEventTargetHelper(aWindow)
++  , mChannel(aChannel)
++  , mOrigin(aOrigin)
++  , mIsKeptAlive(false)
++  , mInnerID(0)
++{
++  // Window can be null in workers
++
++  // Register this component to PBackground.
++  ipc::BackgroundChild::GetOrCreateForCurrentThread(this);
++
++  if (!NS_IsMainThread()) {
++    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
++    MOZ_ASSERT(workerPrivate);
++
++    BroadcastChannelFeature* feature = new BroadcastChannelFeature(this);
++    JSContext* cx = workerPrivate->GetJSContext();
++    if (NS_WARN_IF(!workerPrivate->AddFeature(cx, feature))) {
++      NS_WARNING("Failed to register the BroadcastChannel worker feature.");
++    }
++  }
++
++  // Register as observer for inner-window-destroyed.
++  else {
++    MOZ_ASSERT(aWindow);
++    MOZ_ASSERT(aWindow->IsInnerWindow());
++    mInnerID = aWindow->WindowID();
++
++    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
++    if (obs) {
++      obs->AddObserver(this, "inner-window-destroyed", false);
++    }
++  }
++}
++
++BroadcastChannel::~BroadcastChannel()
++{
++  Shutdown();
++}
++
++JSObject*
++BroadcastChannel::WrapObject(JSContext* aCx)
++{
++  return BroadcastChannelBinding::Wrap(aCx, this);
++}
++
++/* static */ already_AddRefed<BroadcastChannel>
++BroadcastChannel::Constructor(const GlobalObject& aGlobal,
++                              const nsAString& aChannel,
++                              ErrorResult& aRv)
++{
++  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal.GetAsSupports());
++  // Window is null in workers.
++
++  nsAutoString origin;
++
++  if (!NS_IsMainThread()) {
++    nsRefPtr<InitializeRunnable> runnable = new InitializeRunnable(origin, aRv);
++    runnable->Dispatch(aGlobal.Context());
++  } else {
++    nsCOMPtr<nsIGlobalObject> incumbent = mozilla::dom::GetIncumbentGlobal();
++
++    if (!incumbent) {
++      aRv.Throw(NS_ERROR_FAILURE);
++      return nullptr;
++    }
++
++    nsIPrincipal* principal = incumbent->PrincipalOrNull();
++    if (!principal) {
++      aRv.Throw(NS_ERROR_UNEXPECTED);
++      return nullptr;
++    }
++
++    GetOrigin(principal, origin, aRv);
++  }
++
++  if (aRv.Failed()) {
++    return nullptr;
++  }
++
++  nsRefPtr<BroadcastChannel> bc =
++    new BroadcastChannel(window, aChannel, origin);
++
++  return bc.forget();
++}
++
++void
++BroadcastChannel::PostMessage(const nsAString& aMessage)
++{
++  if (mActor) {
++    nsRefPtr<PostMessageRunnable> runnable =
++      new PostMessageRunnable(mActor, aMessage);
++
++    if (NS_FAILED(NS_DispatchToCurrentThread(runnable))) {
++      NS_WARNING("Failed to dispatch to the current thread!");
++    }
++
++    return;
++  }
++
++  mPendingMessages.AppendElement(aMessage);
++}
++
++void
++BroadcastChannel::ActorFailed()
++{
++  MOZ_CRASH("Failed to create a PBackgroundChild actor!");
++}
++
++void
++BroadcastChannel::ActorCreated(ipc::PBackgroundChild* aActor)
++{
++  MOZ_ASSERT(aActor);
++
++  PBroadcastChannelChild* actor =
++    aActor->SendPBroadcastChannelConstructor(mOrigin, mChannel);
++
++  mActor = static_cast<BroadcastChannelChild*>(actor);
++  MOZ_ASSERT(mActor);
++
++  mActor->SetEventTarget(this);
++
++  // Flush pending messages.
++  for (uint32_t i = 0; i < mPendingMessages.Length(); ++i) {
++    PostMessage(mPendingMessages[i]);
++  }
++
++  mPendingMessages.Clear();
++}
++
++void
++BroadcastChannel::Shutdown()
++{
++  // If shutdown() is called we have to release the reference if we still keep
++  // it.
++  if (mIsKeptAlive) {
++    mIsKeptAlive = false;
++    Release();
++  }
++
++  if (mActor) {
++    mActor->SetEventTarget(nullptr);
++
++    nsRefPtr<TeardownRunnable> runnable = new TeardownRunnable(mActor);
++    NS_DispatchToCurrentThread(runnable);
++
++    mActor = nullptr;
++  }
++}
++
++EventHandlerNonNull*
++BroadcastChannel::GetOnmessage()
++{
++  if (NS_IsMainThread()) {
++    return GetEventHandler(nsGkAtoms::onmessage, EmptyString());
++  }
++  return GetEventHandler(nullptr, NS_LITERAL_STRING("message"));
++}
++
++void
++BroadcastChannel::SetOnmessage(EventHandlerNonNull* aCallback)
++{
++  if (NS_IsMainThread()) {
++    SetEventHandler(nsGkAtoms::onmessage, EmptyString(), aCallback);
++  } else {
++    SetEventHandler(nullptr, NS_LITERAL_STRING("message"), aCallback);
++  }
++
++  UpdateMustKeepAlive();
++}
++
++void
++BroadcastChannel::AddEventListener(const nsAString& aType,
++                                   EventListener* aCallback,
++                                   bool aCapture,
++                                   const dom::Nullable<bool>& aWantsUntrusted,
++                                   ErrorResult& aRv)
++{
++  DOMEventTargetHelper::AddEventListener(aType, aCallback, aCapture,
++                                         aWantsUntrusted, aRv);
++
++  if (aRv.Failed()) {
++    return;
++  }
++
++  UpdateMustKeepAlive();
++}
++
++void
++BroadcastChannel::RemoveEventListener(const nsAString& aType,
++                                      EventListener* aCallback,
++                                      bool aCapture,
++                                      ErrorResult& aRv)
++{
++  DOMEventTargetHelper::RemoveEventListener(aType, aCallback, aCapture, aRv);
++
++  if (aRv.Failed()) {
++    return;
++  }
++
++  UpdateMustKeepAlive();
++}
++
++void
++BroadcastChannel::UpdateMustKeepAlive()
++{
++  bool toKeepAlive = HasListenersFor(NS_LITERAL_STRING("message"));
++  if (toKeepAlive == mIsKeptAlive) {
++    return;
++  }
++
++  mIsKeptAlive = toKeepAlive;
++
++  if (toKeepAlive) {
++    AddRef();
++  } else {
++    Release();
++  }
++}
++
++NS_IMETHODIMP
++BroadcastChannel::Observe(nsISupports* aSubject, const char* aTopic,
++                          const char16_t* aData)
++{
++  MOZ_ASSERT(NS_IsMainThread());
++
++  if (strcmp(aTopic, "inner-window-destroyed")) {
++    return NS_OK;
++  }
++
++  // If the window id destroyed we have to release the reference that we are
++  // keeping.
++  if (!mIsKeptAlive) {
++    return NS_OK;
++  }
++
++  nsCOMPtr<nsISupportsPRUint64> wrapper = do_QueryInterface(aSubject);
++  NS_ENSURE_TRUE(wrapper, NS_ERROR_FAILURE);
++
++  uint64_t innerID;
++  nsresult rv = wrapper->GetData(&innerID);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  if (innerID == mInnerID) {
++    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
++    if (obs) {
++      obs->RemoveObserver(this, "inner-window-destroyed");
++    }
++
++    Shutdown();
++  }
++
++  return NS_OK;
++}
++
++NS_IMPL_CYCLE_COLLECTION_CLASS(BroadcastChannel)
++
++NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(BroadcastChannel,
++                                                  DOMEventTargetHelper)
++NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
++
++NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(BroadcastChannel,
++                                                DOMEventTargetHelper)
++  tmp->Shutdown();
++NS_IMPL_CYCLE_COLLECTION_UNLINK_END
++
++NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(BroadcastChannel)
++  NS_INTERFACE_MAP_ENTRY(nsIIPCBackgroundChildCreateCallback)
++  NS_INTERFACE_MAP_ENTRY(nsIObserver)
++NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
++
++NS_IMPL_ADDREF_INHERITED(BroadcastChannel, DOMEventTargetHelper)
++NS_IMPL_RELEASE_INHERITED(BroadcastChannel, DOMEventTargetHelper)
++
++} // dom namespace
++} // mozilla namespace
+diff --git a/dom/broadcastchannel/BroadcastChannel.h b/dom/broadcastchannel/BroadcastChannel.h
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannel.h
+@@ -0,0 +1,89 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#ifndef mozilla_dom_BroadcastChannel_h
++#define mozilla_dom_BroadcastChannel_h
++
++#include "mozilla/Attributes.h"
++#include "mozilla/DOMEventTargetHelper.h"
++#include "nsIIPCBackgroundChildCreateCallback.h"
++#include "nsIObserver.h"
++
++class nsPIDOMWindow;
++
++namespace mozilla {
++namespace dom {
++
++class BroadcastChannelChild;
++
++class BroadcastChannel MOZ_FINAL
++  : public DOMEventTargetHelper
++  , public nsIIPCBackgroundChildCreateCallback
++  , public nsIObserver
++{
++public:
++  NS_DECL_NSIIPCBACKGROUNDCHILDCREATECALLBACK
++  NS_DECL_NSIOBSERVER
++  NS_DECL_ISUPPORTS_INHERITED
++
++  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(BroadcastChannel,
++                                           DOMEventTargetHelper)
++
++  BroadcastChannel(nsPIDOMWindow* aWindow,
++                   const nsAString& aChannel,
++                   const nsAString& aOrigin);
++
++  virtual JSObject*
++  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
++
++  static already_AddRefed<BroadcastChannel>
++  Constructor(const GlobalObject& aGlobal, const nsAString& aChannel,
++              ErrorResult& aRv);
++
++  void GetName(nsAString& aName) const
++  {
++    aName = mChannel;
++  }
++
++  void PostMessage(const nsAString& aMessage);
++
++  EventHandlerNonNull* GetOnmessage();
++  void SetOnmessage(EventHandlerNonNull* aCallback);
++
++  using nsIDOMEventTarget::AddEventListener;
++  using nsIDOMEventTarget::RemoveEventListener;
++
++  virtual void AddEventListener(const nsAString& aType,
++                                EventListener* aCallback,
++                                bool aCapture,
++                                const Nullable<bool>& aWantsUntrusted,
++                                ErrorResult& aRv) MOZ_OVERRIDE;
++  virtual void RemoveEventListener(const nsAString& aType,
++                                   EventListener* aCallback,
++                                   bool aCapture,
++                                   ErrorResult& aRv) MOZ_OVERRIDE;
++
++  void Shutdown();
++
++private:
++  ~BroadcastChannel();
++
++  void UpdateMustKeepAlive();
++
++  nsRefPtr<BroadcastChannelChild> mActor;
++  nsTArray<nsString> mPendingMessages;
++
++  nsString mChannel;
++  nsString mOrigin;
++
++  bool mIsKeptAlive;
++
++  uint64_t mInnerID;
++};
++
++} // namespace dom
++} // namespace mozilla
++
++#endif // mozilla_dom_BroadcastChannel_h
+diff --git a/dom/broadcastchannel/BroadcastChannelChild.cpp b/dom/broadcastchannel/BroadcastChannelChild.cpp
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannelChild.cpp
+@@ -0,0 +1,64 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#include "BroadcastChannelChild.h"
++#include "BroadcastChannel.h"
++#include "mozilla/dom/MessageEvent.h"
++#include "mozilla/dom/MessageEventBinding.h"
++#include "mozilla/ipc/PBackgroundChild.h"
++
++namespace mozilla {
++namespace dom {
++
++BroadcastChannelChild::BroadcastChannelChild(const nsAString& aOrigin,
++                                             const nsAString& aChannel)
++  : mOrigin(aOrigin)
++  , mChannel(aChannel)
++{
++}
++
++bool
++BroadcastChannelChild::RecvNotify(const nsString& aMessage)
++{
++  nsCOMPtr<EventTarget> eventTarget = do_QueryInterface(mEventTarget);
++  // This object is going to be deleted soon. No notify is required.
++  if (!eventTarget) {
++    return true;
++  }
++
++  ThreadsafeAutoSafeJSContext cx;
++  JS::Rooted<JSString*> str(cx, JS_NewUCStringCopyN(cx, aMessage.get(),
++                                                    aMessage.Length()));
++  if (!str) {
++    JS_ClearPendingException(cx);
++    return false;
++  }
++
++  JS::Rooted<JS::Value> value(cx, JS::StringValue(str));
++
++  RootedDictionary<MessageEventInit> init(cx);
++  init.mBubbles = false;
++  init.mCancelable = false;
++  init.mOrigin.Construct(mOrigin);
++  init.mData = value;
++
++  ErrorResult rv;
++  nsRefPtr<MessageEvent> event =
++    MessageEvent::Constructor(mEventTarget, NS_LITERAL_STRING("message"),
++                              init, rv);
++  if (rv.Failed()) {
++    return false;
++  }
++
++  event->SetTrusted(true);
++
++  bool status;
++  mEventTarget->DispatchEvent(static_cast<Event*>(event.get()), &status);
++
++  return true;
++}
++
++} // dom namespace
++} // mozilla namespace
+diff --git a/dom/broadcastchannel/BroadcastChannelChild.h b/dom/broadcastchannel/BroadcastChannelChild.h
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannelChild.h
+@@ -0,0 +1,47 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
++ * You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#ifndef mozilla_dom_BroadcastChannelChild_h
++#define mozilla_dom_BroadcastChannelChild_h
++
++#include "mozilla/dom/EventTarget.h"
++#include "mozilla/dom/PBroadcastChannelChild.h"
++
++namespace mozilla {
++namespace dom {
++
++class EventTarget;
++
++class BroadcastChannelChild MOZ_FINAL : public PBroadcastChannelChild
++{
++public:
++  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(BroadcastChannelChild)
++
++  BroadcastChannelChild(const nsAString& aOrigin,
++                        const nsAString& aChannel);
++
++  void SetEventTarget(EventTarget* aEventTarget)
++  {
++    mEventTarget = aEventTarget;
++  }
++
++  bool RecvNotify(const nsString& aMessage);
++
++private:
++  ~BroadcastChannelChild() {
++    MOZ_ASSERT(!mEventTarget);
++  }
++
++  // This raw pointer is the parent and it's kept alive until this object is
++  // not fully deleted.
++  EventTarget* mEventTarget;
++
++  nsString mOrigin;
++  nsString mChannel;
++};
++
++} // dom namespace
++} // mozilla namespace
++
++#endif // mozilla_dom_BroadcastChannelChild_h
+diff --git a/dom/broadcastchannel/BroadcastChannelParent.cpp b/dom/broadcastchannel/BroadcastChannelParent.cpp
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannelParent.cpp
+@@ -0,0 +1,68 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#include "BroadcastChannelParent.h"
++#include "BroadcastChannelService.h"
++#include "mozilla/unused.h"
++
++namespace mozilla {
++namespace dom {
++
++BroadcastChannelParent::BroadcastChannelParent(const nsAString& aOrigin,
++                                               const nsAString& aChannel)
++  : mService(BroadcastChannelService::GetOrCreate())
++  , mOrigin(aOrigin)
++  , mChannel(aChannel)
++{
++  mService->RegisterActor(this);
++}
++
++BroadcastChannelParent::~BroadcastChannelParent()
++{
++}
++
++bool
++BroadcastChannelParent::RecvPostMessage(const nsString& aMessage)
++{
++  MOZ_ASSERT(mService, "PostMessage is called after a shutdown!");
++  mService->PostMessage(this, aMessage, mOrigin, mChannel);
++  return true;
++}
++
++bool
++BroadcastChannelParent::RecvShutdown()
++{
++  MOZ_ASSERT(mService, "Shutdown has been already called!");
++
++  mService->UnregisterActor(this);
++  mService = nullptr;
++
++  unused << Send__delete__(this);
++
++  return true;
++}
++
++void
++BroadcastChannelParent::ActorDestroy(ActorDestroyReason aWhy)
++{
++  if (mService) {
++    mService->UnregisterActor(this);
++  }
++}
++
++void
++BroadcastChannelParent::CheckAndDeliver(const nsAString& aMessage,
++                                        const nsAString& aOrigin,
++                                        const nsAString& aChannel)
++{
++  if (aOrigin != mOrigin || aChannel != mChannel) {
++    return;
++  }
++
++  unused << SendNotify(nsString(aMessage));
++}
++
++} // dom namespace
++} // mozilla namespace
+diff --git a/dom/broadcastchannel/BroadcastChannelParent.h b/dom/broadcastchannel/BroadcastChannelParent.h
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannelParent.h
+@@ -0,0 +1,41 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
++ * You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#ifndef mozilla_dom_BroadcastChannelParent_h
++#define mozilla_dom_BroadcastChannelParent_h
++
++#include "mozilla/dom/PBroadcastChannelParent.h"
++
++namespace mozilla {
++namespace dom {
++
++class BroadcastChannelService;
++
++class BroadcastChannelParent MOZ_FINAL : public PBroadcastChannelParent
++{
++public:
++  BroadcastChannelParent(const nsAString& aOrigin,
++                         const nsAString& aChannel);
++  ~BroadcastChannelParent();
++
++  virtual bool RecvPostMessage(const nsString& aMessage) MOZ_OVERRIDE;
++
++  virtual bool RecvShutdown() MOZ_OVERRIDE;
++
++  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
++
++  void CheckAndDeliver(const nsAString& aMessage,
++                       const nsAString& aOrigin,
++                       const nsAString& aChannel);
++
++private:
++  nsRefPtr<BroadcastChannelService> mService;
++  nsString mOrigin;
++  nsString mChannel;
++};
++
++} // dom namespace
++} // mozilla namespace
++
++#endif // mozilla_dom_BroadcastChannelParent_h
+diff --git a/dom/broadcastchannel/BroadcastChannelService.cpp b/dom/broadcastchannel/BroadcastChannelService.cpp
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannelService.cpp
+@@ -0,0 +1,100 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#include "BroadcastChannelService.h"
++#include "mozilla/StaticPtr.h"
++
++namespace mozilla {
++namespace dom {
++
++static BroadcastChannelService* sInstance = nullptr;
++
++BroadcastChannelService::BroadcastChannelService()
++{
++  // sInstance is a raw BroadcastChannelService*.
++  MOZ_ASSERT(!sInstance);
++  sInstance = this;
++}
++
++BroadcastChannelService::~BroadcastChannelService()
++{
++  MOZ_ASSERT(sInstance == this);
++  sInstance = nullptr;
++}
++
++// static
++already_AddRefed<BroadcastChannelService>
++BroadcastChannelService::GetOrCreate()
++{
++  nsRefPtr<BroadcastChannelService> instance = sInstance;
++  if (!instance) {
++    instance = new BroadcastChannelService();
++  }
++  return instance.forget();
++}
++
++void
++BroadcastChannelService::RegisterActor(BroadcastChannelParent* aParent)
++{
++  MOZ_ASSERT(!mAgents.Contains(aParent));
++  mAgents.PutEntry(aParent);
++}
++
++void
++BroadcastChannelService::UnregisterActor(BroadcastChannelParent* aParent)
++{
++  MOZ_ASSERT(mAgents.Contains(aParent));
++  mAgents.RemoveEntry(aParent);
++}
++
++namespace {
++
++struct PostMessageData
++{
++  PostMessageData(BroadcastChannelParent* aParent,
++                  const nsAString& aMessage,
++                  const nsAString& aOrigin,
++                  const nsAString& aChannel)
++    : mParent(aParent)
++    , mMessage(aMessage)
++    , mOrigin(aOrigin)
++    , mChannel(aChannel)
++  {}
++
++  BroadcastChannelParent* mParent;
++  const nsAString& mMessage;
++  const nsAString& mOrigin;
++  const nsAString& mChannel;
++};
++
++PLDHashOperator
++PostMessageEnumerator(nsPtrHashKey<BroadcastChannelParent>* aKey, void* aPtr)
++{
++  PostMessageData *data = static_cast<PostMessageData*>(aPtr);
++  BroadcastChannelParent* parent = aKey->GetKey();
++
++  if (parent != data->mParent) {
++    parent->CheckAndDeliver(data->mMessage, data->mOrigin, data->mChannel);
++  }
++
++  return PL_DHASH_NEXT;
++}
++
++} // anonymous namespace
++
++void
++BroadcastChannelService::PostMessage(BroadcastChannelParent* aParent,
++                                     const nsAString& aMessage,
++                                     const nsAString& aOrigin,
++                                     const nsAString& aChannel)
++{
++  MOZ_ASSERT(mAgents.Contains(aParent));
++
++  PostMessageData data(aParent, aMessage, aOrigin, aChannel);
++  mAgents.EnumerateEntries(PostMessageEnumerator, &data);
++}
++
++} // dom namespace
++} // mozilla namespace
+diff --git a/dom/broadcastchannel/BroadcastChannelService.h b/dom/broadcastchannel/BroadcastChannelService.h
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/BroadcastChannelService.h
+@@ -0,0 +1,41 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
++ * You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#ifndef mozilla_dom_BroadcastChannelService_h
++#define mozilla_dom_BroadcastChannelService_h
++
++#include "mozilla/dom/BroadcastChannelParent.h"
++#include "nsISupportsImpl.h"
++#include "nsHashKeys.h"
++#include "nsTHashtable.h"
++
++namespace mozilla {
++namespace dom {
++
++class BroadcastChannelService MOZ_FINAL
++{
++public:
++  NS_INLINE_DECL_REFCOUNTING(BroadcastChannelService)
++
++  static already_AddRefed<BroadcastChannelService> GetOrCreate();
++
++  void RegisterActor(BroadcastChannelParent* aParent);
++  void UnregisterActor(BroadcastChannelParent* aParent);
++
++  void PostMessage(BroadcastChannelParent* aParent,
++                   const nsAString& aMessage,
++                   const nsAString& aOrigin,
++                   const nsAString& aChannel);
++
++private:
++  BroadcastChannelService();
++  ~BroadcastChannelService();
++
++  nsTHashtable<nsPtrHashKey<BroadcastChannelParent>> mAgents;
++};
++
++} // dom namespace
++} // mozilla namespace
++
++#endif // mozilla_dom_BroadcastChannelService_h
+diff --git a/dom/broadcastchannel/PBroadcastChannel.ipdl b/dom/broadcastchannel/PBroadcastChannel.ipdl
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/PBroadcastChannel.ipdl
+@@ -0,0 +1,25 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++include protocol PBackground;
++
++namespace mozilla {
++namespace dom {
++
++// This protocol is used for the BroadcastChannel API
++protocol PBroadcastChannel
++{
++  manager PBackground;
++
++parent:
++  PostMessage(nsString message);
++  Shutdown();
++
++child:
++  Notify(nsString message);
++  __delete__();
++};
++
++} // namespace dom
++} // namespace mozilla
+diff --git a/dom/broadcastchannel/moz.build b/dom/broadcastchannel/moz.build
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/moz.build
+@@ -0,0 +1,34 @@
++# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
++# vim: set filetype=python:
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++TEST_DIRS += ['tests']
++
++EXPORTS.mozilla.dom += [
++    'BroadcastChannel.h',
++    'BroadcastChannelChild.h',
++    'BroadcastChannelParent.h',
++    'BroadcastChannelService.h',
++]
++
++SOURCES += [
++    'BroadcastChannel.cpp',
++    'BroadcastChannelChild.cpp',
++    'BroadcastChannelParent.cpp',
++    'BroadcastChannelService.cpp',
++]
++
++IPDL_SOURCES += [
++    'PBroadcastChannel.ipdl',
++]
++
++LOCAL_INCLUDES += [
++    '../workers',
++]
++
++include('/ipc/chromium/chromium-config.mozbuild')
++
++FINAL_LIBRARY = 'xul'
++FAIL_ON_WARNINGS = True
+diff --git a/dom/broadcastchannel/tests/broadcastchannel_worker.js b/dom/broadcastchannel/tests/broadcastchannel_worker.js
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/broadcastchannel_worker.js
+@@ -0,0 +1,9 @@
++onmessage = function(evt) {
++  var bc = new BroadcastChannel('foobar');
++  bc.addEventListener('message', function(event) {
++    postMessage(event.data == "hello world from the window" ? "OK" : "KO");
++    bc.postMessage("hello world from the worker");
++  }, false);
++
++  postMessage("READY");
++}
+diff --git a/dom/broadcastchannel/tests/iframe_broadcastchannel.html b/dom/broadcastchannel/tests/iframe_broadcastchannel.html
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/iframe_broadcastchannel.html
+@@ -0,0 +1,35 @@
++<!DOCTYPE HTML>
++<html>
++<body>
++  <script type="application/javascript">
++
++function is(a, b, msg) {
++  ok(a == b, msg);
++}
++
++function ok(a, msg) {
++  window.parent.postMessage({ status: a ? "OK" : "KO", message: msg }, "*");
++}
++
++ok("BroadcastChannel" in window, "BroadcastChannel exists");
++
++var bc = new BroadcastChannel("foobar");
++ok(bc, "BroadcastChannel can be created");
++is(bc.name, 'foobar', "BroadcastChannel.name is foobar");
++
++ok("postMessage" in bc, "BroadcastChannel has postMessage() method");
++
++bc.onmessage = function(evt) {
++  ok(evt instanceof MessageEvent, 'evt is a MessageEvent');
++  is(evt.target, bc, 'MessageEvent.target is bc');
++  is(evt.target.name, 'foobar', 'MessageEvent.target.name is foobar');
++  is(evt.target.name, bc.name, 'MessageEvent.target.name is bc.name');
++  is(evt.data, "Hello world from the window!", "Message received from the window");
++  bc.postMessage("Hello world from the iframe!");
++}
++
++  </script>
++</body>
++</html>
++
++
+diff --git a/dom/broadcastchannel/tests/mochitest.ini b/dom/broadcastchannel/tests/mochitest.ini
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/mochitest.ini
+@@ -0,0 +1,8 @@
++[DEFAULT]
++support-files =
++  iframe_broadcastchannel.html
++  broadcastchannel_worker.js
++
++[test_broadcastchannel_basic.html]
++[test_broadcastchannel_self.html]
++[test_broadcastchannel_worker.html]
+diff --git a/dom/broadcastchannel/tests/moz.build b/dom/broadcastchannel/tests/moz.build
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/moz.build
+@@ -0,0 +1,8 @@
++# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
++# vim: set filetype=python:
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++MOCHITEST_MANIFESTS += ['mochitest.ini']
++
+diff --git a/dom/broadcastchannel/tests/test_broadcastchannel_basic.html b/dom/broadcastchannel/tests/test_broadcastchannel_basic.html
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/test_broadcastchannel_basic.html
+@@ -0,0 +1,60 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++  <title>Test for BroadcastChannel</title>
++  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
++  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
++</head>
++<body>
++
++<div id="content"></div>
++
++<script type="application/javascript">
++
++SimpleTest.waitForExplicitFinish();
++
++addEventListener('message', receiveMessage, false);
++function receiveMessage(evt) {
++  if (evt.data.status == 'OK') {
++    ok(true, evt.data.message);
++  } else if (evt.data.status == 'KO') {
++    ok(false, evt.data.message);
++  } else {
++    ok(false, "Unknown message");
++  }
++}
++
++ok("BroadcastChannel" in window, "BroadcastChannel exists");
++
++var bc = new BroadcastChannel("foobar");
++ok(bc, "BroadcastChannel can be created");
++is(bc.name, 'foobar', "BroadcastChannel.name is foobar");
++
++ok("postMessage" in bc, "BroadcastChannel has postMessage() method");
++
++bc.onmessage = function(evt) {
++  ok(evt instanceof MessageEvent, "This is a MessageEvent");
++  is(evt.target, bc, "MessageEvent.target is bc");
++  is(evt.target.name, 'foobar', "MessageEvent.target.name is foobar");
++  is(evt.target.name, bc.name, "MessageEvent.target.name == bc.name");
++  is(evt.origin, 'http://mochi.test:8888', "MessageEvent.origin is correct");
++  is(evt.data, "Hello world from the iframe!", "The message from the iframe has been received!");
++  SimpleTest.finish();
++}
++
++var div = document.getElementById("content");
++ok(div, "Parent exists");
++
++var ifr = document.createElement("iframe");
++ifr.addEventListener("load", iframeLoaded, false);
++ifr.setAttribute('src', "iframe_broadcastchannel.html");
++div.appendChild(ifr);
++
++function iframeLoaded() {
++  bc.postMessage("Hello world from the window!");
++}
++
++</script>
++</body>
++</html>
++
+diff --git a/dom/broadcastchannel/tests/test_broadcastchannel_self.html b/dom/broadcastchannel/tests/test_broadcastchannel_self.html
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/test_broadcastchannel_self.html
+@@ -0,0 +1,35 @@
++<!DOCTYPE HTML>
++<html>
++<head>
++  <title>Test for BroadcastChannel</title>
++  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
++  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
++</head>
++<body>
++
++<div id="content"></div>
++
++<script type="application/javascript">
++
++SimpleTest.waitForExplicitFinish();
++
++x = new BroadcastChannel('foo');
++y = new BroadcastChannel('foo');
++
++function func(e) {
++  is(e.target, y, "The target is !x");
++
++  SimpleTest.executeSoon(function() {
++    SimpleTest.finish();
++  });
++}
++
++x.onmessage = func;
++y.onmessage = func;
++
++x.postMessage('foo');
++
++</script>
++</body>
++</html>
++
+diff --git a/dom/broadcastchannel/tests/test_broadcastchannel_worker.html b/dom/broadcastchannel/tests/test_broadcastchannel_worker.html
+new file mode 100644
+--- /dev/null
++++ b/dom/broadcastchannel/tests/test_broadcastchannel_worker.html
+@@ -0,0 +1,49 @@
++<!--
++  Any copyright is dedicated to the Public Domain.
++  http://creativecommons.org/publicdomain/zero/1.0/
++-->
++<!DOCTYPE HTML>
++<html>
++<!--
++Tests of DOM BroadcastChannel in workers
++-->
++<head>
++  <title>Test for BroadcastChannel in workers</title>
++  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
++  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
++</head>
++<body>
++<p id="display"></p>
++<div id="content" style="display: none">
++
++</div>
++<pre id="test">
++<script class="testbody" language="javascript">
++
++var worker = new Worker("broadcastchannel_worker.js");
++
++var bc = new BroadcastChannel('foobar');
++
++worker.onmessage = function(event) {
++  if (event.data == "READY") {
++    ok(true, "Worker is ready!");
++    bc.postMessage('hello world from the window');
++  } else if(event.data == "OK") {
++    ok(true, "Worker has received the message");
++  } else {
++    ok(false, "Something wrong happened");
++  }
++};
++
++bc.onmessage = function(event) {
++  is("hello world from the worker", event.data, "The message matches!");
++  SimpleTest.finish();
++}
++
++worker.postMessage('go');
++SimpleTest.waitForExplicitFinish();
++
++</script>
++</pre>
++</body>
++</html>
+diff --git a/dom/events/DOMEventTargetHelper.h b/dom/events/DOMEventTargetHelper.h
+--- a/dom/events/DOMEventTargetHelper.h
++++ b/dom/events/DOMEventTargetHelper.h
+@@ -89,16 +89,21 @@ public:
+       // nsISupports pointer. That must be fixed, or we'll crash...
+       NS_ASSERTION(target_qi == target, "Uh, fix QI!");
+     }
+ #endif
+ 
+     return static_cast<DOMEventTargetHelper*>(target);
+   }
+ 
++  bool HasListenersFor(const nsAString& aType)
++  {
++    return mListenerManager && mListenerManager->HasListenersFor(aType);
++  }
++
+   bool HasListenersFor(nsIAtom* aTypeWithOn)
+   {
+     return mListenerManager && mListenerManager->HasListenersFor(aTypeWithOn);
+   }
+ 
+   nsresult SetEventHandler(nsIAtom* aType,
+                            JSContext* aCx,
+                            const JS::Value& aValue);
+diff --git a/dom/events/EventListenerManager.cpp b/dom/events/EventListenerManager.cpp
+--- a/dom/events/EventListenerManager.cpp
++++ b/dom/events/EventListenerManager.cpp
+@@ -1228,18 +1228,29 @@ EventListenerManager::MutationListenerBi
+     }
+   }
+   return bits;
+ }
+ 
+ bool
+ EventListenerManager::HasListenersFor(const nsAString& aEventName)
+ {
+-  nsCOMPtr<nsIAtom> atom = do_GetAtom(NS_LITERAL_STRING("on") + aEventName);
+-  return HasListenersFor(atom);
++  if (mIsMainThreadELM) {
++    nsCOMPtr<nsIAtom> atom = do_GetAtom(NS_LITERAL_STRING("on") + aEventName);
++    return HasListenersFor(atom);
++  }
++
++  uint32_t count = mListeners.Length();
++  for (uint32_t i = 0; i < count; ++i) {
++    Listener* listener = &mListeners.ElementAt(i);
++    if (listener->mTypeString == aEventName) {
++      return true;
++    }
++  }
++  return false;
+ }
+ 
+ bool
+ EventListenerManager::HasListenersFor(nsIAtom* aEventNameWithOn)
+ {
+ #ifdef DEBUG
+   nsAutoString name;
+   aEventNameWithOn->ToString(name);
+diff --git a/dom/events/MessageEvent.cpp b/dom/events/MessageEvent.cpp
+--- a/dom/events/MessageEvent.cpp
++++ b/dom/events/MessageEvent.cpp
+@@ -114,24 +114,33 @@ MessageEvent::GetSource(Nullable<OwningW
+ 
+ /* static */ already_AddRefed<MessageEvent>
+ MessageEvent::Constructor(const GlobalObject& aGlobal,
+                           const nsAString& aType,
+                           const MessageEventInit& aParam,
+                           ErrorResult& aRv)
+ {
+   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
+-  nsRefPtr<MessageEvent> event = new MessageEvent(t, nullptr, nullptr);
++  return Constructor(t, aType, aParam, aRv);
++}
++
++/* static */ already_AddRefed<MessageEvent>
++MessageEvent::Constructor(EventTarget* aEventTarget,
++                          const nsAString& aType,
++                          const MessageEventInit& aParam,
++                          ErrorResult& aRv)
++{
++  nsRefPtr<MessageEvent> event = new MessageEvent(aEventTarget, nullptr, nullptr);
+ 
+   aRv = event->InitEvent(aType, aParam.mBubbles, aParam.mCancelable);
+   if (aRv.Failed()) {
+     return nullptr;
+   }
+ 
+-  bool trusted = event->Init(t);
++  bool trusted = event->Init(aEventTarget);
+   event->SetTrusted(trusted);
+ 
+   event->mData = aParam.mData;
+ 
+   mozilla::HoldJSObjects(event.get());
+ 
+   if (aParam.mOrigin.WasPassed()) {
+     event->mOrigin = aParam.mOrigin.Value();
+diff --git a/dom/events/MessageEvent.h b/dom/events/MessageEvent.h
+--- a/dom/events/MessageEvent.h
++++ b/dom/events/MessageEvent.h
+@@ -69,16 +69,22 @@ public:
+   }
+ 
+   static already_AddRefed<MessageEvent>
+   Constructor(const GlobalObject& aGlobal,
+               const nsAString& aType,
+               const MessageEventInit& aEventInit,
+               ErrorResult& aRv);
+ 
++  static already_AddRefed<MessageEvent>
++  Constructor(EventTarget* aEventTarget,
++              const nsAString& aType,
++              const MessageEventInit& aEventInit,
++              ErrorResult& aRv);
++
+ protected:
+   ~MessageEvent();
+ 
+ private:
+   JS::Heap<JS::Value> mData;
+   nsString mOrigin;
+   nsString mLastEventId;
+   nsCOMPtr<nsIDOMWindow> mWindowSource;
+diff --git a/dom/moz.build b/dom/moz.build
+--- a/dom/moz.build
++++ b/dom/moz.build
+@@ -88,16 +88,17 @@ DIRS += [
+     'plugins/ipc',
+     'indexedDB',
+     'system',
+     'ipc',
+     'identity',
+     'workers',
+     'camera',
+     'audiochannel',
++    'broadcastchannel',
+     'messagechannel',
+     'promise',
+     'smil',
+     'telephony',
+     'tv',
+     'voicemail',
+     'inputmethod',
+     'webidl',
+diff --git a/dom/webidl/BroadcastChannel.webidl b/dom/webidl/BroadcastChannel.webidl
+new file mode 100644
+--- /dev/null
++++ b/dom/webidl/BroadcastChannel.webidl
+@@ -0,0 +1,18 @@
++/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
++ *
++ * For more information on this interface, please see
++ * http://www.whatwg.org/specs/web-apps/current-work/multipage/web-messaging.html#broadcasting-to-other-browsing-contexts
++ */
++
++[Constructor(DOMString channel),
++ Exposed=(Window,Worker)]
++interface BroadcastChannel : EventTarget {
++  readonly attribute DOMString name;
++
++  void postMessage(DOMString message);
++
++           attribute EventHandler onmessage;
++};
+diff --git a/dom/webidl/moz.build b/dom/webidl/moz.build
+--- a/dom/webidl/moz.build
++++ b/dom/webidl/moz.build
+@@ -50,16 +50,17 @@ WEBIDL_FILES = [
+     'AutocompleteInfo.webidl',
+     'BarProp.webidl',
+     'BatteryManager.webidl',
+     'BeforeAfterKeyboardEvent.webidl',
+     'BeforeUnloadEvent.webidl',
+     'BiquadFilterNode.webidl',
+     'Blob.webidl',
+     'BoxObject.webidl',
++    'BroadcastChannel.webidl',
+     'BrowserElement.webidl',
+     'BrowserElementDictionaries.webidl',
+     'Cache.webidl',
+     'CacheStorage.webidl',
+     'CallsList.webidl',
+     'CameraCapabilities.webidl',
+     'CameraControl.webidl',
+     'CameraManager.webidl',
+diff --git a/ipc/glue/BackgroundChildImpl.cpp b/ipc/glue/BackgroundChildImpl.cpp
+--- a/ipc/glue/BackgroundChildImpl.cpp
++++ b/ipc/glue/BackgroundChildImpl.cpp
+@@ -1,16 +1,18 @@
+ /* This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+ #include "BackgroundChildImpl.h"
+ 
+ #include "FileDescriptorSetChild.h"
+ #include "mozilla/Assertions.h"
++#include "mozilla/dom/BroadcastChannelChild.h"
++#include "mozilla/dom/PBroadcastChannelChild.h"
+ #include "mozilla/dom/PBlobChild.h"
+ #include "mozilla/dom/indexedDB/PBackgroundIDBFactoryChild.h"
+ #include "mozilla/dom/ipc/BlobChild.h"
+ #include "mozilla/dom/MessagePortChild.h"
+ #include "mozilla/dom/cache/CacheChild.h"
+ #include "mozilla/dom/cache/PCacheStorageChild.h"
+ #include "mozilla/dom/cache/CacheStreamControlChild.h"
+ #include "mozilla/ipc/PBackgroundTestChild.h"
+@@ -192,16 +194,39 @@ BackgroundChildImpl::DeallocPFileDescrip
+                                                 PFileDescriptorSetChild* aActor)
+ {
+   MOZ_ASSERT(aActor);
+ 
+   delete static_cast<FileDescriptorSetChild*>(aActor);
+   return true;
+ }
+ 
++// -----------------------------------------------------------------------------
++// BroadcastChannel API
++// -----------------------------------------------------------------------------
++
++dom::PBroadcastChannelChild*
++BackgroundChildImpl::AllocPBroadcastChannelChild(const nsString& aOrigin,
++                                                 const nsString& aChannel)
++{
++  nsRefPtr<dom::BroadcastChannelChild> agent =
++    new dom::BroadcastChannelChild(aOrigin, aChannel);
++  return agent.forget().take();
++}
++
++bool
++BackgroundChildImpl::DeallocPBroadcastChannelChild(
++                                                 PBroadcastChannelChild* aActor)
++{
++  nsRefPtr<dom::BroadcastChannelChild> child =
++    dont_AddRef(static_cast<dom::BroadcastChannelChild*>(aActor));
++  MOZ_ASSERT(child);
++  return true;
++}
++
+ PCacheStorageChild*
+ BackgroundChildImpl::AllocPCacheStorageChild(const Namespace& aNamespace,
+                                              const PrincipalInfo& aPrincipalInfo)
+ {
+   MOZ_CRASH("CacheStorageChild actor must be provided to PBackground manager");
+   return nullptr;
+ }
+ 
+diff --git a/ipc/glue/BackgroundChildImpl.h b/ipc/glue/BackgroundChildImpl.h
+--- a/ipc/glue/BackgroundChildImpl.h
++++ b/ipc/glue/BackgroundChildImpl.h
+@@ -74,16 +74,23 @@ protected:
+ 
+   virtual PFileDescriptorSetChild*
+   AllocPFileDescriptorSetChild(const FileDescriptor& aFileDescriptor)
+                                MOZ_OVERRIDE;
+ 
+   virtual bool
+   DeallocPFileDescriptorSetChild(PFileDescriptorSetChild* aActor) MOZ_OVERRIDE;
+ 
++  virtual PBroadcastChannelChild*
++  AllocPBroadcastChannelChild(const nsString& aOrigin,
++                              const nsString& aChannelg) MOZ_OVERRIDE;
++
++  virtual bool
++  DeallocPBroadcastChannelChild(PBroadcastChannelChild* aActor) MOZ_OVERRIDE;
++
+   virtual mozilla::dom::cache::PCacheStorageChild*
+   AllocPCacheStorageChild(const dom::cache::Namespace& aNamespace,
+                           const PrincipalInfo& aPrincipalInfo) MOZ_OVERRIDE;
+ 
+   virtual bool
+   DeallocPCacheStorageChild(dom::cache::PCacheStorageChild* aActor) MOZ_OVERRIDE;
+ 
+   virtual dom::cache::PCacheChild* AllocPCacheChild() MOZ_OVERRIDE;
+diff --git a/ipc/glue/BackgroundParentImpl.cpp b/ipc/glue/BackgroundParentImpl.cpp
+--- a/ipc/glue/BackgroundParentImpl.cpp
++++ b/ipc/glue/BackgroundParentImpl.cpp
+@@ -2,16 +2,17 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+ #include "BackgroundParentImpl.h"
+ 
+ #include "FileDescriptorSetParent.h"
+ #include "mozilla/Assertions.h"
+ #include "mozilla/dom/PBlobParent.h"
++#include "mozilla/dom/BroadcastChannelParent.h"
+ #include "mozilla/dom/indexedDB/ActorsParent.h"
+ #include "mozilla/dom/ipc/BlobParent.h"
+ #include "mozilla/dom/MessagePortParent.h"
+ #include "mozilla/dom/cache/CacheStorageParent.h"
+ #include "mozilla/dom/cache/PCacheParent.h"
+ #include "mozilla/dom/cache/PCacheStreamControlParent.h"
+ #include "mozilla/ipc/BackgroundParent.h"
+ #include "mozilla/ipc/PBackgroundTestParent.h"
+@@ -274,16 +275,38 @@ BackgroundParentImpl::DeallocPMessagePor
+   AssertIsInMainProcess();
+   AssertIsOnBackgroundThread();
+   MOZ_ASSERT(aActor);
+ 
+   delete static_cast<MessagePortParent*>(aActor);
+   return true;
+ }
+ 
++PBroadcastChannelParent*
++BackgroundParentImpl::AllocPBroadcastChannelParent(const nsString& aOrigin,
++                                                   const nsString& aChannel)
++{
++  AssertIsInMainProcess();
++  AssertIsOnBackgroundThread();
++
++  return new BroadcastChannelParent(aOrigin, aChannel);
++}
++
++bool
++BackgroundParentImpl::DeallocPBroadcastChannelParent(
++                                                PBroadcastChannelParent* aActor)
++{
++  AssertIsInMainProcess();
++  AssertIsOnBackgroundThread();
++  MOZ_ASSERT(aActor);
++
++  delete static_cast<BroadcastChannelParent*>(aActor);
++  return true;
++}
++
+ } // namespace ipc
+ } // namespace mozilla
+ 
+ void
+ TestParent::ActorDestroy(ActorDestroyReason aWhy)
+ {
+   AssertIsInMainProcess();
+   AssertIsOnBackgroundThread();
+diff --git a/ipc/glue/BackgroundParentImpl.h b/ipc/glue/BackgroundParentImpl.h
+--- a/ipc/glue/BackgroundParentImpl.h
++++ b/ipc/glue/BackgroundParentImpl.h
+@@ -59,16 +59,23 @@ protected:
+   virtual PFileDescriptorSetParent*
+   AllocPFileDescriptorSetParent(const FileDescriptor& aFileDescriptor)
+                                 MOZ_OVERRIDE;
+ 
+   virtual bool
+   DeallocPFileDescriptorSetParent(PFileDescriptorSetParent* aActor)
+                                   MOZ_OVERRIDE;
+ 
++  virtual PBroadcastChannelParent*
++  AllocPBroadcastChannelParent(const nsString& aOrigin,
++                               const nsString& aChannel) MOZ_OVERRIDE;
++
++  virtual bool
++  DeallocPBroadcastChannelParent(PBroadcastChannelParent* aActor) MOZ_OVERRIDE;
++
+   virtual mozilla::dom::cache::PCacheStorageParent*
+   AllocPCacheStorageParent(const Namespace& aNamespace,
+                            const PrincipalInfo& aPrincipalInfo) MOZ_OVERRIDE;
+ 
+   virtual bool
+   DeallocPCacheStorageParent(mozilla::dom::cache::PCacheStorageParent* aActor) MOZ_OVERRIDE;
+ 
+   virtual mozilla::dom::cache::PCacheParent* AllocPCacheParent() MOZ_OVERRIDE;
+diff --git a/ipc/glue/PBackground.ipdl b/ipc/glue/PBackground.ipdl
+--- a/ipc/glue/PBackground.ipdl
++++ b/ipc/glue/PBackground.ipdl
+@@ -1,14 +1,15 @@
+ /* This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+ include protocol PBackgroundIDBFactory;
+ include protocol PBackgroundTest;
++include protocol PBroadcastChannel;
+ include protocol PBlob;
+ include protocol PFileDescriptorSet;
+ include protocol PCache;
+ include protocol PCacheStorage;
+ include protocol PCacheStreamControl;
+ include protocol PMessagePort;
+ 
+ include DOMTypes;
+@@ -18,16 +19,17 @@ using mozilla::dom::cache::Namespace fro
+ 
+ namespace mozilla {
+ namespace ipc {
+ 
+ sync protocol PBackground
+ {
+   manages PBackgroundIDBFactory;
+   manages PBackgroundTest;
++  manages PBroadcastChannel;
+   manages PBlob;
+   manages PFileDescriptorSet;
+   manages PCache;
+   manages PCacheStorage;
+   manages PCacheStreamControl;
+   manages PMessagePort;
+ 
+ parent:
+@@ -35,16 +37,18 @@ parent:
+   PBackgroundTest(nsCString testArg);
+ 
+   PBackgroundIDBFactory();
+ 
+   PCacheStorage(Namespace aNamespace, PrincipalInfo aPrincipalInfo);
+ 
+   PMessagePort();
+ 
++  PBroadcastChannel(nsString origin, nsString channel);
++
+ both:
+   PBlob(BlobConstructorParams params);
+ 
+   PFileDescriptorSet(FileDescriptor fd);
+ 
+ child:
+   PCache();
+   PCacheStreamControl();

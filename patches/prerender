@@ -1,0 +1,68 @@
+# HG changeset patch
+# Parent f0fefd9dc1db708d04b30e1dd72e9222339d0619
+# User Vivien Nicolas <vnicolas@mozilla.com>
+
+diff --git a/dom/browser-element/BrowserElementChildPreload.js b/dom/browser-element/BrowserElementChildPreload.js
+--- a/dom/browser-element/BrowserElementChildPreload.js
++++ b/dom/browser-element/BrowserElementChildPreload.js
+@@ -482,31 +482,38 @@ BrowserElementChild.prototype = {
+ 
+   _manifestChangedHandler: function(e) {
+     debug('Got manifestchanged: (' + e.target.href + ')');
+     let manifest = { href: e.target.href };
+     sendAsyncMsg('manifestchange', manifest);
+ 
+   },
+ 
++  _prerenderChangedHandler: function(e) {
++    debug('Got prerender: (' + e.target.href + ')');
++    let href = { href: e.target.href };
++    sendAsyncMsg('prerenderchange', href);
++  },
++
+   // Processes the "rel" field in <link> tags and forward to specific handlers.
+   _linkAddedHandler: function(e) {
+     let win = e.target.ownerDocument.defaultView;
+     // Ignore links which don't come from the top-level
+     // <iframe mozbrowser> window.
+     if (win != content) {
+       debug('Not top level!');
+       return;
+     }
+ 
+     let handlers = {
+       'icon': this._iconChangedHandler.bind(this),
+       'apple-touch-icon': this._iconChangedHandler.bind(this),
+       'search': this._openSearchHandler,
+-      'manifest': this._manifestChangedHandler
++      'manifest': this._manifestChangedHandler,
++      'prerender': this._prerenderChangedHandler
+     };
+ 
+     debug('Got linkAdded: (' + e.target.href + ') ' + e.target.rel);
+     e.target.rel.split(' ').forEach(function(x) {
+       let token = x.toLowerCase();
+       if (handlers[token]) {
+         handlers[token](e);
+       }
+diff --git a/dom/browser-element/BrowserElementParent.js b/dom/browser-element/BrowserElementParent.js
+--- a/dom/browser-element/BrowserElementParent.js
++++ b/dom/browser-element/BrowserElementParent.js
+@@ -207,16 +207,17 @@ BrowserElementParent.prototype = {
+       "contextmenu": this._fireCtxMenuEvent,
+       "securitychange": this._fireEventFromMsg,
+       "locationchange": this._fireEventFromMsg,
+       "iconchange": this._fireEventFromMsg,
+       "scrollareachanged": this._fireEventFromMsg,
+       "titlechange": this._fireProfiledEventFromMsg,
+       "opensearch": this._fireEventFromMsg,
+       "manifestchange": this._fireEventFromMsg,
++      "prerenderchange": this._fireEventFromMsg,
+       "metachange": this._fireEventFromMsg,
+       "resize": this._fireEventFromMsg,
+       "activitydone": this._fireEventFromMsg,
+       "scroll": this._fireEventFromMsg
+     };
+ 
+     this._mm.addMessageListener('browser-element-api:call', function(aMsg) {
+       if (!self._isAlive()) {
