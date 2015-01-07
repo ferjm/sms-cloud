@@ -4,8 +4,8 @@
 (function(exports) {
   'use strict';
 
-  const MAX_LENGTH = 40;
-  const privateMembers = new WeakMap();
+  var MAX_LENGTH = 40;
+  var privateMembers = new WeakMap();
 
   function onKeyDown(e) {
     /* jshint validthis: true */

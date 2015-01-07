@@ -5,7 +5,7 @@
     return;
   }
 
-  const KNOWN_SETTINGS = new Map();
+  var KNOWN_SETTINGS = new Map();
 
   KNOWN_SETTINGS.set('locale.hour12', true);
 

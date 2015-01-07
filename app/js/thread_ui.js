@@ -565,7 +565,7 @@ var ThreadUI = {
 
       // Populate draft if there is one
       // TODO merge with handleDraft ? Bug 1010216
-      Drafts.request().then(() => {
+      Drafts.request().then(function() {
         var thread = Threads.get(threadId);
         if (thread.hasDrafts) {
           this.draft = thread.drafts.latest;
@@ -595,7 +595,7 @@ var ThreadUI = {
       var nodes = this.container.querySelectorAll(
         '.attachment-container[data-thumbnail]'
       );
-      Array.from(nodes).forEach((node) => {
+      Array.from(nodes).forEach(function(node) {
         window.URL.revokeObjectURL(node.dataset.thumbnail);
       });
     }
@@ -1029,7 +1029,7 @@ var ThreadUI = {
   },
 
   close: function thui_close() {
-    return this._onNavigatingBack().then(() => {
+    return this._onNavigatingBack().then(function() {
       this.cleanFields();
       ActivityHandler.leaveActivity();
     }).catch(function(e) {
@@ -1615,7 +1615,7 @@ var ThreadUI = {
     }
 
     if (message.type === 'mms' && !isNotDownloaded && !noAttachment) { // MMS
-      SMIL.parse(message, (slideArray) => {
+      SMIL.parse(message, function(slideArray) {
         pElement.appendChild(ThreadUI.createMmsContent(slideArray));
         this.scrollViewToBottom();
       });
@@ -1738,7 +1738,7 @@ var ThreadUI = {
     }
 
     if (!this.selectionHandler) {
-      LazyLoader.load('js/selection_handler.js', () => {
+      LazyLoader.load('js/selection_handler.js', function() {
         this.selectionHandler = new SelectionHandler({
           // Elements
           container: this.container,
@@ -1809,7 +1809,7 @@ var ThreadUI = {
 
       WaitingScreen.show();
       var items = this.selectionHandler.selectedList;
-      var delNumList = items.map(item => +item);
+      var delNumList = items.map(function(item) {return +item});
 
       // Complete deletion in DB and in UI
       MessageManager.deleteMessages(delNumList,
@@ -1901,7 +1901,7 @@ var ThreadUI = {
     // Click events originating from a "message-status" aside of an error
     // message should trigger a prompt for retransmission.
     if (elems.message.classList.contains('error') && elems.messageStatus) {
-      Utils.confirm('resend-confirmation').then(() => {
+      Utils.confirm('resend-confirmation').then(function() {
         this.resendMessage(elems.message.dataset.messageId);
       });
     }
@@ -1987,7 +1987,7 @@ var ThreadUI = {
         params.items.push(
           {
             l10nId: 'select-text',
-            method: (node) => {
+            method: function(node) {
               this.enableBubbleSelection(
                 node.querySelector('.message-content-body')
               );
@@ -2013,9 +2013,9 @@ var ThreadUI = {
               Utils.confirm(
                 'deleteMessage-confirmation', null,
                 { text: 'delete', className: 'danger' }
-              ).then(() => {
+              ).then(function() {
                 MessageManager.deleteMessages(
-                  messageId, () => ThreadUI.deleteUIMessages(messageId)
+                  messageId, function() { return ThreadUI.deleteUIMessages(messageId)}
                 );
               });
             },

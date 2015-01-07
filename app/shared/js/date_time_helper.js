@@ -30,10 +30,5 @@
 
   var _kLocaleTime = 'locale.hour12';
   // update mozHour12 to real value
-  var req = window.navigator.mozSettings.createLock().get(_kLocaleTime);
-  req.onsuccess = function() {
-    _setMozHour12(req.result[_kLocaleTime]);
-  };
   // monitor settings changes
-  window.navigator.mozSettings.addObserver(_kLocaleTime, _hour12Handler);
 })();

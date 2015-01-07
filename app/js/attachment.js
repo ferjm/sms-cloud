@@ -11,7 +11,7 @@
   'use strict';
 
   // Path to the folder that stores all saved attachments
-  const ATTACHMENT_FOLDER_PATH = 'sms-attachments/';
+  var ATTACHMENT_FOLDER_PATH = 'sms-attachments/';
 
   /**
   * Gets actual base file name (name.extension) from its path.

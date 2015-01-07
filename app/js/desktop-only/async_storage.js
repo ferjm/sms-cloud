@@ -2,10 +2,10 @@
   'use strict';
 
   // Fake drafts stored in local store
-  const timestamp = Date.now(),
+  var timestamp = Date.now(),
         store = new Map();
 
-  const draftIndex = [
+  var draftIndex = [
     [11,  [{
       recipients: ['555', '666'],
       subject: '',

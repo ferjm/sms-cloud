@@ -1051,7 +1051,7 @@
 
   Recipients.View.prompts = {
     remove: function(recipient, callback) {
-      callback = typeof callback === 'function' ? callback : () => {};
+      callback = typeof callback === 'function' ? callback : function() {};
 
       var bodyTemplate = SharedComponents.phoneDetails({
         number: recipient.number,
@@ -1066,7 +1066,7 @@
         { raw: bodyTemplate.toDocumentFragment() },
         { raw: title },
         { text: 'remove', className: 'danger' }
-      ).then(() => callback(true), () => callback(false));
+      ).then(function() {callback(true)}, function() {callback(false)});
 
       Recipients.View.isFocusable = false;
     }

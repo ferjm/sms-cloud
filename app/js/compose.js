@@ -21,10 +21,10 @@
  */
 var Compose = (function() {
   // delay between 2 counter updates while composing a message
-  const UPDATE_DELAY = 500;
+  var UPDATE_DELAY = 500;
 
   // Min available chars count that triggers available chars counter
-  const MIN_AVAILABLE_CHARS_COUNT = 20;
+  var MIN_AVAILABLE_CHARS_COUNT = 20;
 
   var placeholderClass = 'placeholder';
   var attachmentClass = 'attachment-container';
@@ -221,7 +221,7 @@ var Compose = (function() {
     }
 
     var imgNodes = [];
-    attachments.forEach((attachment, node) => {
+    attachments.forEach(function(attachment, node) {
       if (attachment.type === 'img') {
         imgNodes.push(node);
       }
@@ -595,7 +595,7 @@ var Compose = (function() {
       this.onTypeChange();
 
       // Dispose attachments
-      attachments.forEach((attachment, node) => disposeAttachmentNode(node));
+      attachments.forEach(function(attachment, node) {return disposeAttachmentNode(node)});
 
       dom.message.innerHTML = '<br>';
 
