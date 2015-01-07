@@ -49,7 +49,7 @@ var Startup = {
   ],
 
   _lazyLoadInit: function() {
-    return LazyLoader.load(this._lazyLoadScripts).then(() => {
+    return LazyLoader.load(this._lazyLoadScripts).then(function() {
       LocalizationHelper.init();
 
       InterInstanceEventDispatcher.connect();

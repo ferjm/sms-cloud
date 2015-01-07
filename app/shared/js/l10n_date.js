@@ -80,7 +80,7 @@ navigator.mozL10n.DateTimeFormat = function(locales, options) {
         // other tokens don't require any localization
       }
 
-      format = format.replace(tokens[i], value || d.toLocaleFormat(tokens[i]));
+      format = format.replace(tokens[i], value || ( d.toLocaleFormat && d.toLocaleFormat(tokens[i])) || "l10n dates not supported");
     }
 
     return format;

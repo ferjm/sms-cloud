@@ -61,7 +61,7 @@
     }
   };
 
-  getTestFile('/js/desktop-only/assets/kitten.jpg', function(testImageBlob) {
+  getTestFile('js/desktop-only/assets/kitten.jpg', function(testImageBlob) {
     messagesDb.messages.push({
       id: messagesDb.id++,
       threadId: 6,
@@ -128,7 +128,7 @@
     });
   });
 
-  getTestFile('/test/unit/media/video.ogv', function(testVideoBlob) {
+  getTestFile('test/unit/media/video.ogv', function(testVideoBlob) {
     messagesDb.messages.push({
       id: messagesDb.id++,
       threadId: 6,
@@ -176,7 +176,7 @@
       timestamp: now
     });
   });
-  getTestFile('/test/unit/media/audio.oga', function(testAudioBlob) {
+  getTestFile('test/unit/media/audio.oga', function(testAudioBlob) {
     messagesDb.messages.push({
       id: messagesDb.id++,
       threadId: 6,
@@ -225,7 +225,7 @@
     });
   });
 
-  getTestFile('/js/desktop-only/assets/kitten.bmp', function(testImageBlob) {
+  getTestFile('js/desktop-only/assets/kitten.bmp', function(testImageBlob) {
     messagesDb.messages.push({
       id: messagesDb.id++,
       threadId: 6,
@@ -250,7 +250,7 @@
     });
   });
 
-  getTestFile('/test/unit/media/grid.wbmp', function(testImageBlob) {
+  getTestFile('test/unit/media/grid.wbmp', function(testImageBlob) {
     messagesDb.messages.push({
       id: messagesDb.id++,
       threadId: 6,
@@ -275,7 +275,7 @@
     });
   });
 
-  getTestFile('/test/unit/media/contacts.vcf', function(contactBlob) {
+  getTestFile('test/unit/media/contacts.vcf', function(contactBlob) {
     messagesDb.messages.push({
       id: messagesDb.id++,
       threadId: 6,

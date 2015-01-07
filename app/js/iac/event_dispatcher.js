@@ -36,7 +36,7 @@
       worker.port.addEventListener('message', onMessage);
       worker.port.start();
 
-      exports.addEventListener('unload', () => this.disconnect());
+      exports.addEventListener('unload', function() { this.disconnect() }.bind(this));
     },
 
     disconnect: function() {

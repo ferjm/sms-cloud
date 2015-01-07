@@ -95,7 +95,7 @@ var LazyLoader = (function() {
 
     load: function(files, callback) {
       var deferred = {};
-      deferred.promise = new Promise(resolve => {
+      deferred.promise = new Promise(function(resolve) {
         deferred.resolve = resolve;
       });
 

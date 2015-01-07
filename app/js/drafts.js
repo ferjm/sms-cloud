@@ -236,7 +236,7 @@
       draftIndex.forEach(function(v, k) {
         entries.push([k, v]);
       });
-      asyncStorage.setItem('draft index', entries, () => {
+      asyncStorage.setItem('draft index', entries, function() {
         InterInstanceEventDispatcher.emit('drafts-changed');
       });
     },
@@ -260,8 +260,8 @@
         // Convert every plain JS draft object into Draft "class" instance.
         // record[0] is the threadId or null key, record[1] is the array of
         // draft objects associated with that threadId or null key.
-        records && records.forEach((record) => {
-          record[1] = record[1].map((draft) => new Draft(draft));
+        records && records.forEach(function(record) {
+          record[1] = record[1].map(function(draft) { new Draft(draft) });
         });
         draftIndex = new Map(records || []);
 

@@ -466,7 +466,7 @@ var ThreadListUI = {
     }
 
     if (!this.selectionHandler) {
-      LazyLoader.load('js/selection_handler.js', () => {
+      LazyLoader.load('js/selection_handler.js', function() {
         this.selectionHandler = new SelectionHandler({
           // Elements
           container: this.container,
@@ -475,7 +475,7 @@ var ThreadListUI = {
           checkInputs: this.checkInputs.bind(this),
           getAllInputs: this.getAllInputs.bind(this),
           isInEditMode: this.isInEditMode.bind(this)
-        });
+        }.bind(this));
         editModeSetup.call(this);
       });
     } else {
@@ -495,30 +495,31 @@ var ThreadListUI = {
   renderDrafts: function thlui_renderDrafts(force) {
     // Request and render all threads with drafts
     // or thread-less drafts.
-    return Drafts.request(force).then(() => {
+    var self = this;
+    return Drafts.request(force).then(function() {
       Drafts.forEach(function(draft, threadId) {
         if (threadId) {
           // Find draft-containing threads that have already been rendered
           // and update them so they mark themselves appropriately
           var el = document.getElementById('thread-' + threadId);
           if (el) {
-            this.updateThread(Threads.get(threadId));
+            self.updateThread(Threads.get(threadId));
           }
         } else {
           // Safely assume there is a threadless draft
-          this.setEmpty(false);
+          self.setEmpty(false);
 
           // If there is currently no list item rendered for this
           // draft, then proceed.
-          if (!this.draftRegistry[draft.id]) {
-            this.appendThread(
+          if (!self.draftRegistry[draft.id]) {
+            self.appendThread(
               Thread.create(draft)
             );
           }
         }
-      }, this);
+      }, self);
 
-      this.sticky && this.sticky.refresh();
+      self.sticky && self.sticky.refresh();
     });
   },
 

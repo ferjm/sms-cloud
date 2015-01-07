@@ -274,8 +274,9 @@ var Navigation = {
     );
 
     promise.
-      then(() => this.emit('navigated', { panel: panel, args: args })).
-      then(nextQueuedPanel, nextQueuedPanel);
+      then(function() {
+        this.emit('navigated', { panel: panel, args: args })
+      }.bind(this)).then(nextQueuedPanel, nextQueuedPanel);
 
     return promise;
   },

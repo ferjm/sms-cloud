@@ -758,8 +758,8 @@
             }
 
             return Promise.resolve(result.value).then(
-              (result) => handle(generator.next(result)),
-              (error) => handle(generator.throw(error))
+              function(result) { handle(generator.next(result)) },
+              function(error) { handle(generator.throw(error)) }
             );
           }
 
