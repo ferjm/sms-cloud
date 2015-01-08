@@ -67,92 +67,15 @@
     <script defer src="js/settings.js"></script>
     <script defer src="js/subject_composer.js"></script>
     <script defer src="js/attachment.js"></script>
-    <script defer src="js/compose.js"></script>
     <script defer src="js/recipients.js"></script>
     <script defer src="js/message_manager.js"></script>
-    <script defer src="js/thread_ui.js"></script>
+    <script defer src="js/messages_list.js"></script>
     <script defer src="js/thread_content.js"></script>
     <script defer src="js/app.js"></script>
   </head>
 
   <body role="application" class="skin-comms theme-communications">
-    <article id="composer-container" class="view-body">
-      <div class="flex-composer">
-        <div id="messages-container" data-type="list" class="article-list"></div>
-        <form id="messages-compose-form" role="search" class="bottom" data-message-type="sms">
-          <section class="mms-label-line">
-            <section class="subject-composer js-subject-composer hide">
-              <div contentEditable="true" class="subject-composer-input"
-                   role="textbox"
-                   aria-multiline="false">
-              </div>
-              <div class="subject-composer-placeholder"
-                   data-l10n-id="messagesSubjectInput_placeholder">
-              </div>
-            </section>
-            <span class="mms-label"
-                  data-l10n-id="mms-label">MMS</span>
-          </section>
-          <section class="content-composer">
-            <div class="messages-attach-container">
-              <button id="messages-attach-button" aria-label="Add attachment" data-l10n-id="attach-button" type="button"></button>
-            </div>
-            <div class="composer-message-input-container">
-              <div id="messages-input" contentEditable="true" name="message"
-                   x-inputmode="-moz-sms" class="js-l10n-placeholder"
-                   role="textbox" aria-multiline="true">
-              </div>
-            </div>
-            <div class="composer-button-container">
-              <span class="message-counter js-message-counter"></span>
-              <button id="messages-send-button" class="icon" aria-label="Send" data-l10n-id="send-button" type="submit">
-                <div class="js-sim-indication sim-indication" data-l10n-id="send-button-sim-indication"></div>
-              </button>
-            </div>
-          </section>
-        </form>
-      </div>
-    </article>
-    <form role="dialog" id="messages-edit-form" data-type="edit" >
-      <section role="region" class="theme-settings">
-        <gaia-header id="messages-edit-header" action="close">
-          <h1 id="messages-edit-mode" data-l10n-id="deleteMessages-title">Delete Messages</h1>
-          <button id="messages-check-uncheck-all-button" class="edit-button" data-l10n-id="select-all"></button>
-        </gaia-header>
-      </section>
-      <menu>
-        <button id="messages-delete-button" data-l10n-id="delete">delete</button>
-      </menu>
-    </form>
-
-    <section id="messages-recipient-suggestions" class="article-list hide" data-type="list">
-      <ul class="contact-list recipient-suggestions-list" role="listbox"></ul>
-    </section>
-
-    <article id="loading">
-      <form role="dialog" data-type="confirm" class="loading-container">
-        <section>
-          <p class="loading-header" data-l10n-id="deleting-messages">Deleting messages...</p>
-          <div role="status">
-            <progress class="small"></progress>
-          </div>
-        </section>
-      </form>
-    </article>
-
-    <menu id="attachment-options-menu" tabindex="-1">
-      <div>
-        <form id="attachment-options" role="dialog" data-type="action">
-          <header></header>
-          <menu>
-            <button id="attachment-options-view"></button>
-            <button id="attachment-options-remove"></button>
-            <button id="attachment-options-replace"></button>
-            <button id="attachment-options-cancel" data-l10n-id="cancel"></button>
-          </menu>
-        </form>
-      </div>
-    </menu>
+    <div id="messages-container" data-type="list" class="article-list"></div>
 
     <!--
       -  Templates

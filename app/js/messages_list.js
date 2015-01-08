@@ -90,20 +90,13 @@ var ThreadUI = {
       'message-status',
       'not-downloaded',
       'recipient',
-      'date-group',
-      'header'
+      'date-group'
     ];
 
 
     // Fields with 'messages' label
     [
-      'to-field', 'recipients-list', 'compose-form', 'header',
-      'edit-header', 'check-uncheck-all-button', 'contact-pick-button',
-      'send-button', 'delete-button', 'call-number-button', 'options-button',
-      'new-message-notice', 'edit-mode', 'edit-form', 'header-text',
-      'max-length-notice', 'convert-notice', 'resize-notice',
-      'new-message-notice', 'subject-max-length-notice', 'sms-counter-notice',
-      'recipient-suggestions'
+      'container',
     ].forEach(function(id) {
       this[Utils.camelCase(id)] = document.getElementById('messages-' + id);
     }, this);
@@ -118,83 +111,93 @@ var ThreadUI = {
     document.addEventListener('visibilitychange',
                               this.onVisibilityChange);
 
-    this.toField.addEventListener(
-      'keypress', this.toFieldKeypress.bind(this), true
+    // this.toField.addEventListener(
+    //   'keypress', this.toFieldKeypress.bind(this), true
+    // );
+
+    // this.toField.addEventListener(
+    //   'input', this.toFieldInput.bind(this), true
+    // );
+
+    // this.toField.addEventListener(
+    //   'focus', this.toFieldInput.bind(this), true
+    // );
+
+    // this.sendButton.addEventListener(
+    //   'click', this.onSendClick.bind(this)
+    // );
+
+    // this.sendButton.addEventListener(
+    //   'contextmenu', this.onSendClick.bind(this)
+    // );
+
+    this.container.addEventListener(
+      'scroll', this.manageScroll.bind(this)
     );
 
-    this.toField.addEventListener(
-      'input', this.toFieldInput.bind(this), true
-    );
+    // this.editHeader.addEventListener(
+    //   'action', this.cancelEdit.bind(this)
+    // );
 
-    this.toField.addEventListener(
-      'focus', this.toFieldInput.bind(this), true
-    );
+    // this.header.addEventListener(
+    //   'action', this.onHeaderAction.bind(this)
+    // );
 
-    this.sendButton.addEventListener(
-      'click', this.onSendClick.bind(this)
-    );
+    // this.optionsButton.addEventListener(
+    //   'click', this.showOptions.bind(this)
+    // );
 
-    this.sendButton.addEventListener(
-      'contextmenu', this.onSendClick.bind(this)
-    );
+    // this.callNumberButton.addEventListener('click', function() {
+    //   ActivityPicker.dial(Threads.active.participants[0]);
+    // });
 
-    this.editHeader.addEventListener(
-      'action', this.cancelEdit.bind(this)
-    );
+    // this.deleteButton.addEventListener(
+    //   'click', this.delete.bind(this)
+    // );
 
-    this.header.addEventListener(
-      'action', this.onHeaderAction.bind(this)
-    );
+    // this.headerText.addEventListener(
+    //   'click', this.onHeaderActivation.bind(this)
+    // );
 
-    this.optionsButton.addEventListener(
-      'click', this.showOptions.bind(this)
-    );
+    // this.newMessageNotice.addEventListener(
+    //   'click', this.onNewMessageNoticeClick.bind(this)
+    // );
 
-    this.callNumberButton.addEventListener('click', function() {
-      ActivityPicker.dial(Threads.active.participants[0]);
-    });
-
-    this.deleteButton.addEventListener(
-      'click', this.delete.bind(this)
+    this.container.addEventListener(
+      'click', this.handleEvent.bind(this)
     );
-
-    this.headerText.addEventListener(
-      'click', this.onHeaderActivation.bind(this)
+    this.container.addEventListener(
+      'contextmenu', this.handleEvent.bind(this)
     );
-
-    this.newMessageNotice.addEventListener(
-      'click', this.onNewMessageNoticeClick.bind(this)
-    );
-
-    this.editForm.addEventListener(
-      'submit', this.handleEvent.bind(this)
-    );
-    this.composeForm.addEventListener(
-      'submit', this.handleEvent.bind(this)
-    );
+    // this.editForm.addEventListener(
+    //   'submit', this.handleEvent.bind(this)
+    // );
+    // this.composeForm.addEventListener(
+    //   'submit', this.handleEvent.bind(this)
+    // );
     // For picking a contact from Contacts. It's mouse down for
     // avoiding weird effect of keyboard, as in 'send' button.
-    this.contactPickButton.addEventListener(
-      'mousedown', this.requestContact.bind(this)
-    );
+    // this.contactPickButton.addEventListener(
+    //   'mousedown', this.requestContact.bind(this)
+    // );
 
     // Avoid click event propagate to recipient view, otherwise Recipients.View
     // constructor will attach click event on the messages-to-field element.
-    this.contactPickButton.addEventListener(
-      'click', function onClick(event) {
-        event.stopPropagation();
-      }
-    );
+    // this.contactPickButton.addEventListener(
+    //   'click', function onClick(event) {
+    //     event.stopPropagation();
+    //   }
+    // );
 
     navigator.mozContacts.addEventListener(
       'contactchange',
       this.updateHeaderData.bind(this)
     );
 
-    this.recipientSuggestions.addEventListener(
-      'click',
-      this.onRecipientSuggestionClick.bind(this)
-    );
+    // this.recipientSuggestions.addEventListener(
+    //   'click',
+    //   this.onRecipientSuggestionClick.bind(this)
+    // );
 
     MessageManager.on('message-sending', this.onMessageSending.bind(this));
     MessageManager.on('message-sent', this.onMessageSent.bind(this));
@@ -214,13 +217,13 @@ var ThreadUI = {
 
     this.initRecipients();
 
-    Compose.init('messages-compose-form');
+    // Compose.init('messages-compose-form');
 
-    // In case of input, we have to resize the input following UX Specs.
-    Compose.on('input', this.messageComposerInputHandler.bind(this));
-    Compose.on('type', this.onMessageTypeChange.bind(this));
-    Compose.on('subject-change', this.onSubjectChange.bind(this));
-    Compose.on('segmentinfochange', this.onSegmentInfoChange.bind(this));
+    // // In case of input, we have to resize the input following UX Specs.
+    // Compose.on('input', this.messageComposerInputHandler.bind(this));
+    // Compose.on('type', this.onMessageTypeChange.bind(this));
+    // Compose.on('subject-change', this.onSubjectChange.bind(this));
+    // Compose.on('segmentinfochange', this.onSegmentInfoChange.bind(this));
 
     // Assimilations
     // -------------------------------------------------
@@ -245,8 +248,11 @@ var ThreadUI = {
     //      will also jump focus to the message input field
     //
     // So we assimilate recipients if user starts to interact with Composer
-    Compose.on('interact', this.assimilateRecipients.bind(this));
+    // Compose.on('interact', this.assimilateRecipients.bind(this));
 
+    this.container.addEventListener(
+      'click', this.assimilateRecipients.bind(this)
+    );
 
     this.multiSimActionButton = null;
 
@@ -255,8 +261,6 @@ var ThreadUI = {
     this.shouldChangePanelNextEvent = false;
 
     this.showErrorInFailedEvent = '';
-
-    EventManager.addEventListener('messagesSync', this.renderMessages.bind(this));
   },
 
   onVisibilityChange: function thui_onVisibilityChange(e) {
@@ -328,26 +332,26 @@ var ThreadUI = {
     }).bind(this);
 
     if (this.recipients) {
-      this.recipients.length = 0;
-      this.recipients.visible('singleline');
-      this.recipients.focus();
+      // this.recipients.length = 0;
+      // this.recipients.visible('singleline');
+      // this.recipients.focus();
     } else {
-      this.recipients = new Recipients({
-        outer: 'messages-to-field',
-        inner: 'messages-recipients-list',
-        template: this.tmpl.recipient
-      });
+      // this.recipients = new Recipients({
+      //   outer: 'messages-to-field',
+      //   inner: 'messages-recipients-list',
+      //   template: this.tmpl.recipient
+      // });
 
-      this.recipients.on('add', recipientsChanged);
-      this.recipients.on('remove', recipientsChanged);
-      this.recipients.on('modechange', function(mode) {
-        this.threadMessages.classList.toggle(
-          'multiline-recipients-mode',
-           mode === 'multiline-mode'
-        );
-      }.bind(this));
+      // this.recipients.on('add', recipientsChanged);
+      // this.recipients.on('remove', recipientsChanged);
+      // this.recipients.on('modechange', function(mode) {
+      //   this.threadMessages.classList.toggle(
+      //     'multiline-recipients-mode',
+      //      mode === 'multiline-mode'
+      //   );
+      // }.bind(this));
     }
-    this.toggleRecipientSuggestions();
+    // this.toggleRecipientSuggestions();
   },
 
   initSentAudio: function thui_initSentAudio() {
@@ -382,7 +386,13 @@ var ThreadUI = {
   },
 
   getAllInputs: function thui_getAllInputs() {
-    return [];
+    if (this.container) {
+      return Array.prototype.slice.call(
+        this.container.querySelectorAll('input[type=checkbox]')
+      );
+    } else {
+      return [];
+    }
   },
 
   setHeaderAction: function thui_setHeaderAction(icon) {
@@ -971,7 +981,11 @@ var ThreadUI = {
   },
 
   scrollViewToBottom: function thui_scrollViewToBottom() {
-
+    if (!this.isScrolledManually &&
+        this.container.lastElementChild &&
+        Navigation.isCurrentPanel('thread')) {
+      this.container.lastElementChild.scrollIntoView(false);
+    }
   },
 
   forceScrollViewToBottom: function thui_forceScrollViewToBottom() {
@@ -1169,7 +1183,7 @@ var ThreadUI = {
       if (Compose.size > Settings.mmsSizeLimitation) {
         this.showMaxLengthNotice({
           l10nId: 'multimedia-message-exceeded-max-length',
-          l10nArgs: {
+          l10nArgs: { 
             mmsSize: (Settings.mmsSizeLimitation / 1024).toFixed(0)
           }
         });
@@ -1221,6 +1235,7 @@ var ThreadUI = {
       TimeHeaders.update(header);
     }
 
+    this._insertTimestampedNodeToContainer(messageDateGroup, this.container);
 
     return messageContainer;
   },
@@ -1258,8 +1273,10 @@ var ThreadUI = {
   },
 
   // Method for updating the header with the info retrieved from Contacts API
-  updateHeaderData: function thui_updateHeaderData(thread) {
-    var number;
+  updateHeaderData: function thui_updateHeaderData() {
+    var thread, number;
+
+    thread = Threads.active;
 
     if (!thread) {
       return Promise.resolve();
@@ -1268,25 +1285,34 @@ var ThreadUI = {
     number = thread.participants[0];
 
     // Add data to contact activity interaction
-    this.headerText.dataset.number = number;
+    // this.headerText.dataset.number = number;
 
     return new Promise(function(resolve, reject) {
-      // Bug 867948: contacts null is a legitimate case, and
-      // getContactDetails is okay with that.
-      var contactName = number;
-      this.headerText.dataset.isContact = false;
-      this.headerText.dataset.title = contactName;
+      Contacts.findByAddress(number, function gotContact(contacts) {
+        // For the basic display, we only need the first contact's information
+        // e.g. for 3 contacts, the app displays:
+        //
+        //    Jane Doe (+2)
+        //
+        var details = Utils.getContactDetails(number, contacts);
+        // Bug 867948: contacts null is a legitimate case, and
+        // getContactDetails is okay with that.
+        var contactName = details.title || number;
+        // this.headerText.dataset.isContact = !!details.isContact;
+        // this.headerText.dataset.title = contactName;
 
-      this.headerText.classList.toggle(
-        'thread-group-header',
-        thread.participants.length > 1
-      );
-      this.setHeaderContent(this.tmpl.header.interpolate({
-        name: contactName,
-        participantCount: (thread.participants.length - 1).toString()
-      }));
+        // this.headerText.classList.toggle(
+        //   'thread-group-header',
+        //   thread.participants.length > 1
+        // );
+        // this.setHeaderContent(this.tmpl.header.interpolate({
+        //   name: contactName,
+        //   participantCount: (thread.participants.length - 1).toString()
+        // }));
 
-      resolve();
+        this.updateCarrier(thread, contacts);
+        resolve();
+      }.bind(this));
     }.bind(this));
   },
 
@@ -1302,20 +1328,20 @@ var ThreadUI = {
    */
   setHeaderContent: function thui_setHeaderContent(content) {
     if (typeof content === 'string') {
-      this.headerText.removeAttribute('data-l10n-id');
-      this.headerText.removeAttribute('data-l10n-args');
+      // this.headerText.removeAttribute('data-l10n-id');
+      // this.headerText.removeAttribute('data-l10n-args');
 
-      this.headerText.innerHTML = content;
+      // this.headerText.innerHTML = content;
     } else {
       // Remove rich HTML content before we set l10n attributes as l10n lib
       // fails in this case
-      if (this.headerText.firstElementChild) {
-        this.headerText.textContent = '';
-      }
+      // if (this.headerText.firstElementChild) {
+      //   this.headerText.textContent = '';
+      // }
 
-      navigator.mozL10n.setAttributes(
-        this.headerText, content.id, content.args
-      );
+      // navigator.mozL10n.setAttributes(
+      //   this.headerText, content.id, content.args
+      // );
     }
   },
 
@@ -1666,17 +1692,17 @@ var ThreadUI = {
 
     // Subject management
     var subjectItem;
-    if (Compose.isSubjectVisible) {
-      subjectItem = {
-        l10nId: 'remove-subject',
-        method: Compose.hideSubject
-      };
-    } else {
-      subjectItem = {
-        l10nId: 'add-subject',
-        method: Compose.showSubject
-      };
-    }
+    // if (Compose.isSubjectVisible) {
+    //   subjectItem = {
+    //     l10nId: 'remove-subject',
+    //     method: Compose.hideSubject
+    //   };
+    // } else {
+    //   subjectItem = {
+    //     l10nId: 'add-subject',
+    //     method: Compose.showSubject
+    //   };
+    // }
     params.items.push(subjectItem);
 
     // If we are on a thread, we can call to SelectMessages
@@ -2020,37 +2046,9 @@ var ThreadUI = {
       this.recipients.length = 0;
     }
 
-    Compose.clear();
+    // Compose.clear();
   },
 
-  onSendClick: function thui_onSendClick() {
-    if (Compose.isEmpty()) {
-      return;
-    }
-
-    // Assimilation 3 (see "Assimilations" above)
-    // User may return to recipients, type a new recipient
-    // manually and then click the sendButton without "accepting"
-    // the recipient.
-    this.assimilateRecipients();
-
-    // not sure why this happens - replace me if you know
-    this.container.classList.remove('hide');
-  },
-
-  // FIXME/bug 983411: phoneNumber not needed.
-  simSelectedCallback: function thui_simSelected(phoneNumber, cardIndex) {
-    if (Compose.isEmpty()) {
-      return;
-    }
-
-    cardIndex = +cardIndex;
-    if (isNaN(cardIndex)) {
-      cardIndex = 0;
-    }
-
-    this.sendMessage({ serviceId: cardIndex });
-  },
 
   sendMessage: function thui_sendMessage(opts) {
     var content = Compose.getContent(),
@@ -2557,7 +2555,7 @@ var ThreadUI = {
       return;
     }
 
-    var number = this.headerText.dataset.number;
+    // var number = this.headerText.dataset.number;
 
     var tel, email;
     if (Settings.supportEmailRecipient && Utils.isEmailAddress(number)) {
@@ -2566,17 +2564,17 @@ var ThreadUI = {
       tel = number;
     }
 
-    if (this.headerText.dataset.isContact === 'true') {
-      this.promptContact({
-        number: number
-      });
-    } else {
-      this.prompt({
-        number: tel,
-        email: email,
-        isContact: false
-      });
-    }
+    // if (this.headerText.dataset.isContact === 'true') {
+    //   this.promptContact({
+    //     number: number
+    //   });
+    // } else {
+    //   this.prompt({
+    //     number: tel,
+    //     email: email,
+    //     isContact: false
+    //   });
+    // }
   },
 
   promptContact: function thui_promptContact(opts) {

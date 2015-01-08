@@ -274,7 +274,7 @@ var ThreadListUI = {
 
           } else {
             var sms = new BroadcastChannel('sms');
-            sms.postMessage(parentThreadId);
+            sms.postMessage(JSON.stringify(Threads.get(parentThreadId)));
           }
         }
 
@@ -564,6 +564,7 @@ var ThreadListUI = {
     }.bind(this);
 
     function onRenderThread(thread) {
+      console.debug(JSON.stringify(thread));
       /* jshint validthis: true */
       // Register all threads to the Threads object.
       Threads.set(thread.id, thread);

@@ -64,6 +64,7 @@
    */
   flex: 1 0 calc(15.4% + 5.38rem);
   overflow: auto;
+  height: 100%;
 }
 
 .new #messages-container {
