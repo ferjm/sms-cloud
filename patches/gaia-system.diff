@@ -1,0 +1,68 @@
+diff --git a/apps/system/js/app_window.js b/apps/system/js/app_window.js
+index f7f8b08..51ce5c9 100644
+--- a/apps/system/js/app_window.js
++++ b/apps/system/js/app_window.js
+@@ -626,6 +626,27 @@
+     if (this.config.stayBackground || this.isHomescreen) {
+       this.setVisible(false);
+     }
++    var self = this;
++    var child;
++    this.iframe.addEventListener('mozbrowserprerenderchange', function(e) {
++      console.debug('mozbrowserprerenderchange', e.detail.href);
++      if (!child) {
++        child = self.childWindowFactory.createChildWindow({
++          detail: {
++            url: e.detail.href,
++            frameElement: null
++          }
++        }, true);
++      }
++
++      child.iframe.addEventListener('mozbrowserclose', function() {
++        child = null;
++      });
++    });
++
++    this.iframe.addEventListener('mozbrowseropenwindow', function(e) {
++      child.requestOpen();
++    });
+ 
+     /**
+      * Fired after the app window element is appended to the DOM tree.
+diff --git a/apps/system/js/child_window_factory.js b/apps/system/js/child_window_factory.js
+index 2611a02..5e536bd 100644
+--- a/apps/system/js/child_window_factory.js
++++ b/apps/system/js/child_window_factory.js
+@@ -135,7 +135,7 @@
+   };
+ 
+   ChildWindowFactory.prototype.createNewWindow = function(evt) {
+-    if (!this.app.isActive() || this.app.isTransitioning()) {
++    if (!this.app.isActive() || this.app.isTransitioning() || evt.detail.name === '_blank') {
+       return false;
+     }
+     var configObject = {
+@@ -150,8 +150,8 @@
+     return true;
+   };
+ 
+-  ChildWindowFactory.prototype.createChildWindow = function(evt) {
+-    if (!this.app.isActive() || this.app.isTransitioning()) {
++  ChildWindowFactory.prototype.createChildWindow = function(evt, skipOpen) {
++    if ((!this.app.isActive() || this.app.isTransitioning()) && !skipOpen) {
+       return false;
+     }
+     var configObject = {
+@@ -169,8 +169,9 @@
+       configObject.origin = evt.detail.url;
+     }
+     var childWindow = new AppWindow(configObject);
+-    childWindow.requestOpen();
+-    return true;
++    if (!skipOpen)
++      childWindow.requestOpen();
++    return childWindow;
+   };
+ 
+   ChildWindowFactory.prototype.createAttentionWindow = function(evt) {
