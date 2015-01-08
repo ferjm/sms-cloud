@@ -5788,7 +5788,7 @@ function ajax(options, adapterCallback) {
   if (options.xhr) {
     xhr = new options.xhr();
   } else {
-    xhr = new XMLHttpRequest();
+    xhr = new XMLHttpRequest({mozSystem: true});
   }
   xhr.open(options.method, options.url);
   xhr.withCredentials = true;

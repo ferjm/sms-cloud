@@ -16,7 +16,7 @@
 (function(exports) {
 var MessageManager = {
   init: function mm_init() {
-    this._mozMobileMessage = navigator.mozMobileMessage;
+    this._mozMobileMessage = MultiMobileMessage;
 
     this._mozMobileMessage.addEventListener(
       'received', this.onMessageReceived.bind(this)
