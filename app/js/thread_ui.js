@@ -90,17 +90,16 @@ var ThreadUI = {
       'message-status',
       'not-downloaded',
       'recipient',
-      'date-group',
-      'header'
+      'date-group'
     ];
 
 
     // Fields with 'messages' label
     [
-      'container', 'to-field', 'recipients-list', 'compose-form', 'header',
-      'edit-header', 'check-uncheck-all-button', 'contact-pick-button',
+      'container', 'to-field', 'recipients-list', 'compose-form',
+      'check-uncheck-all-button', 'contact-pick-button',
       'send-button', 'delete-button', 'call-number-button', 'options-button',
-      'new-message-notice', 'edit-mode', 'edit-form', 'header-text',
+      'new-message-notice', 'edit-mode', 'edit-form',
       'max-length-notice', 'convert-notice', 'resize-notice',
       'new-message-notice', 'subject-max-length-notice', 'sms-counter-notice',
       'recipient-suggestions'
@@ -118,17 +117,17 @@ var ThreadUI = {
     document.addEventListener('visibilitychange',
                               this.onVisibilityChange);
 
-    this.toField.addEventListener(
-      'keypress', this.toFieldKeypress.bind(this), true
-    );
+    // this.toField.addEventListener(
+    //   'keypress', this.toFieldKeypress.bind(this), true
+    // );
 
-    this.toField.addEventListener(
-      'input', this.toFieldInput.bind(this), true
-    );
+    // this.toField.addEventListener(
+    //   'input', this.toFieldInput.bind(this), true
+    // );
 
-    this.toField.addEventListener(
-      'focus', this.toFieldInput.bind(this), true
-    );
+    // this.toField.addEventListener(
+    //   'focus', this.toFieldInput.bind(this), true
+    // );
 
     this.sendButton.addEventListener(
       'click', this.onSendClick.bind(this)
@@ -142,33 +141,33 @@ var ThreadUI = {
       'scroll', this.manageScroll.bind(this)
     );
 
-    this.editHeader.addEventListener(
-      'action', this.cancelEdit.bind(this)
-    );
+    // this.editHeader.addEventListener(
+    //   'action', this.cancelEdit.bind(this)
+    // );
 
-    this.header.addEventListener(
-      'action', this.onHeaderAction.bind(this)
-    );
+    // this.header.addEventListener(
+    //   'action', this.onHeaderAction.bind(this)
+    // );
 
-    this.optionsButton.addEventListener(
-      'click', this.showOptions.bind(this)
-    );
+    // this.optionsButton.addEventListener(
+    //   'click', this.showOptions.bind(this)
+    // );
 
-    this.callNumberButton.addEventListener('click', function() {
-      ActivityPicker.dial(Threads.active.participants[0]);
-    });
+    // this.callNumberButton.addEventListener('click', function() {
+    //   ActivityPicker.dial(Threads.active.participants[0]);
+    // });
 
     this.deleteButton.addEventListener(
       'click', this.delete.bind(this)
     );
 
-    this.headerText.addEventListener(
-      'click', this.onHeaderActivation.bind(this)
-    );
+    // this.headerText.addEventListener(
+    //   'click', this.onHeaderActivation.bind(this)
+    // );
 
-    this.newMessageNotice.addEventListener(
-      'click', this.onNewMessageNoticeClick.bind(this)
-    );
+    // this.newMessageNotice.addEventListener(
+    //   'click', this.onNewMessageNoticeClick.bind(this)
+    // );
 
     this.container.addEventListener(
       'click', this.handleEvent.bind(this)
@@ -184,17 +183,17 @@ var ThreadUI = {
     );
     // For picking a contact from Contacts. It's mouse down for
     // avoiding weird effect of keyboard, as in 'send' button.
-    this.contactPickButton.addEventListener(
-      'mousedown', this.requestContact.bind(this)
-    );
+    // this.contactPickButton.addEventListener(
+    //   'mousedown', this.requestContact.bind(this)
+    // );
 
     // Avoid click event propagate to recipient view, otherwise Recipients.View
     // constructor will attach click event on the messages-to-field element.
-    this.contactPickButton.addEventListener(
-      'click', function onClick(event) {
-        event.stopPropagation();
-      }
-    );
+    // this.contactPickButton.addEventListener(
+    //   'click', function onClick(event) {
+    //     event.stopPropagation();
+    //   }
+    // );
 
     navigator.mozContacts.addEventListener(
       'contactchange',
@@ -339,26 +338,26 @@ var ThreadUI = {
     }).bind(this);
 
     if (this.recipients) {
-      this.recipients.length = 0;
-      this.recipients.visible('singleline');
-      this.recipients.focus();
+      // this.recipients.length = 0;
+      // this.recipients.visible('singleline');
+      // this.recipients.focus();
     } else {
-      this.recipients = new Recipients({
-        outer: 'messages-to-field',
-        inner: 'messages-recipients-list',
-        template: this.tmpl.recipient
-      });
+      // this.recipients = new Recipients({
+      //   outer: 'messages-to-field',
+      //   inner: 'messages-recipients-list',
+      //   template: this.tmpl.recipient
+      // });
 
-      this.recipients.on('add', recipientsChanged);
-      this.recipients.on('remove', recipientsChanged);
-      this.recipients.on('modechange', function(mode) {
-        this.threadMessages.classList.toggle(
-          'multiline-recipients-mode',
-           mode === 'multiline-mode'
-        );
-      }.bind(this));
+      // this.recipients.on('add', recipientsChanged);
+      // this.recipients.on('remove', recipientsChanged);
+      // this.recipients.on('modechange', function(mode) {
+      //   this.threadMessages.classList.toggle(
+      //     'multiline-recipients-mode',
+      //      mode === 'multiline-mode'
+      //   );
+      // }.bind(this));
     }
-    this.toggleRecipientSuggestions();
+    // this.toggleRecipientSuggestions();
   },
 
   initSentAudio: function thui_initSentAudio() {
@@ -403,7 +402,7 @@ var ThreadUI = {
   },
 
   setHeaderAction: function thui_setHeaderAction(icon) {
-    this.header.setAttribute('action', icon);
+    // this.header.setAttribute('action', icon);
   },
 
   messageComposerInputHandler: function thui_messageInputHandler(event) {
@@ -501,12 +500,19 @@ var ThreadUI = {
     }
   },
 
-  beforeEnterThread: function thui_beforeEnterThread(thread) {
+  beforeEnterThread: function thui_beforeEnterThread(args) {
     // TODO should we implement hooks to Navigation so that Threads could
     // get an event whenever the panel changes?
+    Threads.currentId = args.id;
+
+    var prevPanel = args.meta.prev && args.meta.prev.panel;
+
+    if (prevPanel !== 'group-view' && prevPanel !== 'report-view') {
+      this.initializeRendering();
+    }
 
     // Call button should be shown only for non-email single-participant thread
-    if (thread.participants.length === 1 &&
+    if (Threads.active.participants.length === 1 &&
         (!Settings.supportEmailRecipient ||
          !Utils.isEmailAddress(Threads.active.participants[0]))) {
       this.callNumberButton.classList.remove('hide');
@@ -549,23 +555,28 @@ var ThreadUI = {
   },
 
   afterEnterThread: function thui_afterEnterThread(args) {
-    var threadId = +args.thread.id;
+    var threadId = +args.id;
 
+    var prevPanel = args.meta.prev && args.meta.prev.panel;
 
-    this.renderMessages(threadId);
+    if (prevPanel !== 'group-view' && prevPanel !== 'report-view') {
+      this.renderMessages(threadId);
 
-    // Populate draft if there is one
-    // TODO merge with handleDraft ? Bug 1010216
-    Drafts.request().then(function() {
-      var thread = args.thread;
-      if (thread.hasDrafts) {
-        this.draft = thread.drafts.latest;
-        Compose.fromDraft(this.draft);
-        this.draft.isEdited = false;
-      } else {
-        this.draft = null;
-      }
-    });
+      // Populate draft if there is one
+      // TODO merge with handleDraft ? Bug 1010216
+      Drafts.request().then(() => {
+        var thread = Threads.get(threadId);
+        if (thread.hasDrafts) {
+          this.draft = thread.drafts.latest;
+          Compose.fromDraft(this.draft);
+          this.draft.isEdited = false;
+        } else {
+          this.draft = null;
+        }
+      });
+    }
+
+    ThreadListUI.mark(threadId, 'read');
 
     // nothing urgent, let's do it when the main thread has some time
     setTimeout(MessageManager.markThreadRead.bind(MessageManager, threadId));
@@ -578,20 +589,37 @@ var ThreadUI = {
     // to slide correctly. Bug 1009541
     this.cancelEdit();
 
-    // Revoke thumbnail URL for every image attachment rendered within thread
-    var nodes = this.container.querySelectorAll(
-      '.attachment-container[data-thumbnail]'
-    );
-    Array.from(nodes).forEach(function(node) {
-      window.URL.revokeObjectURL(node.dataset.thumbnail);
-    });
+    if (Navigation.isCurrentPanel('thread')) {
+      // Revoke thumbnail URL for every image attachment rendered within thread
+      var nodes = this.container.querySelectorAll(
+        '.attachment-container[data-thumbnail]'
+      );
+      Array.from(nodes).forEach((node) => {
+        window.URL.revokeObjectURL(node.dataset.thumbnail);
+      });
+    }
 
     // TODO move most of back() here: Bug 1010223
   },
 
   afterLeave: function thui_afterLeave(args) {
-    this.threadMessages.classList.remove('has-carrier');
-    this.callNumberButton.classList.add('hide');
+    if (Navigation.isCurrentPanel('thread-list')) {
+      this.container.textContent = '';
+      this.cleanFields();
+      Threads.currentId = null;
+    }
+    if (!Navigation.isCurrentPanel('composer')) {
+      this.threadMessages.classList.remove('new');
+
+      this.recipients.length = 0;
+
+      this.toggleRecipientSuggestions();
+    }
+
+    if (!Navigation.isCurrentPanel('thread')) {
+      this.threadMessages.classList.remove('has-carrier');
+      this.callNumberButton.classList.add('hide');
+    }
   },
 
   handleForward: function thui_handleForward(forward) {
@@ -713,6 +741,9 @@ var ThreadUI = {
     var node = this.recipientsList.lastChild;
     var typed;
 
+    if (!isNew || node === null) {
+      return;
+    }
 
     // Ensure that Recipients does not trigger focus
     // on itself, which will cause the cursor to "jump"
@@ -767,7 +798,13 @@ var ThreadUI = {
   },
 
   isCurrentThread: function thui_isCurrentThread(threadId) {
-    return true;
+    return Navigation.isCurrentPanel('thread', { id: threadId }) ||
+      Navigation.isCurrentPanel('report-view', {
+        threadId: threadId
+      }) ||
+      Navigation.isCurrentPanel('group-view', {
+        id: threadId
+      });
   },
 
   onMessageReceived: function thui_onMessageReceived(e) {
@@ -794,6 +831,7 @@ var ThreadUI = {
       this.forceScrollViewToBottom();
     } else {
       if (this.shouldChangePanelNextEvent) {
+        Navigation.toPanel('thread', { id: message.threadId });
         this.shouldChangePanelNextEvent = false;
       }
     }
@@ -950,7 +988,8 @@ var ThreadUI = {
 
   scrollViewToBottom: function thui_scrollViewToBottom() {
     if (!this.isScrolledManually &&
-        this.container.lastElementChild) {
+        this.container.lastElementChild &&
+        Navigation.isCurrentPanel('thread')) {
       this.container.lastElementChild.scrollIntoView(false);
     }
   },
@@ -989,7 +1028,7 @@ var ThreadUI = {
   },
 
   close: function thui_close() {
-    return this._onNavigatingBack().then(function() {
+    return this._onNavigatingBack().then(() => {
       this.cleanFields();
       ActivityHandler.leaveActivity();
     }).catch(function(e) {
@@ -1002,7 +1041,22 @@ var ThreadUI = {
   },
 
   back: function thui_back() {
-    window.close();
+    if (Navigation.isCurrentPanel('group-view') ||
+        Navigation.isCurrentPanel('report-view')) {
+      Navigation.toPanel('thread', { id: Threads.currentId });
+      this.updateHeaderData();
+
+      return Promise.resolve();
+    }
+
+    return this._onNavigatingBack().then(function() {
+      this.cleanFields();
+      Navigation.toPanel('thread-list');
+    }.bind(this)).catch(function(e) {
+      e && console.error('Unexpected error while navigating back: ', e);
+
+      return Promise.reject(e);
+    });
   },
 
   _onNavigatingBack: function() {
@@ -1225,37 +1279,46 @@ var ThreadUI = {
   },
 
   // Method for updating the header with the info retrieved from Contacts API
-  updateHeaderData: function thui_updateHeaderData(thread) {
-    var number;
+  updateHeaderData: function thui_updateHeaderData() {
+    var thread, number;
+
+    thread = Threads.active;
 
     if (!thread) {
       return Promise.resolve();
     }
 
-    console.debug(thread);
-
     number = thread.participants[0];
 
     // Add data to contact activity interaction
-    this.headerText.dataset.number = number;
+    // this.headerText.dataset.number = number;
 
     return new Promise(function(resolve, reject) {
-      // Bug 867948: contacts null is a legitimate case, and
-      // getContactDetails is okay with that.
-      var contactName = number;
-      this.headerText.dataset.isContact = false;
-      this.headerText.dataset.title = number;
+      Contacts.findByAddress(number, function gotContact(contacts) {
+        // For the basic display, we only need the first contact's information
+        // e.g. for 3 contacts, the app displays:
+        //
+        //    Jane Doe (+2)
+        //
+        var details = Utils.getContactDetails(number, contacts);
+        // Bug 867948: contacts null is a legitimate case, and
+        // getContactDetails is okay with that.
+        var contactName = details.title || number;
+        // this.headerText.dataset.isContact = !!details.isContact;
+        // this.headerText.dataset.title = contactName;
 
-      this.headerText.classList.toggle(
-        'thread-group-header',
-        thread.participants.length > 1
-      );
-      this.setHeaderContent(this.tmpl.header.interpolate({
-        name: contactName,
-        participantCount: (thread.participants.length - 1).toString()
-      }));
+        // this.headerText.classList.toggle(
+        //   'thread-group-header',
+        //   thread.participants.length > 1
+        // );
+        // this.setHeaderContent(this.tmpl.header.interpolate({
+        //   name: contactName,
+        //   participantCount: (thread.participants.length - 1).toString()
+        // }));
 
-      resolve();
+        this.updateCarrier(thread, contacts);
+        resolve();
+      }.bind(this));
     }.bind(this));
   },
 
@@ -1271,20 +1334,20 @@ var ThreadUI = {
    */
   setHeaderContent: function thui_setHeaderContent(content) {
     if (typeof content === 'string') {
-      this.headerText.removeAttribute('data-l10n-id');
-      this.headerText.removeAttribute('data-l10n-args');
+      // this.headerText.removeAttribute('data-l10n-id');
+      // this.headerText.removeAttribute('data-l10n-args');
 
-      this.headerText.innerHTML = content;
+      // this.headerText.innerHTML = content;
     } else {
       // Remove rich HTML content before we set l10n attributes as l10n lib
       // fails in this case
-      if (this.headerText.firstElementChild) {
-        this.headerText.textContent = '';
-      }
+      // if (this.headerText.firstElementChild) {
+      //   this.headerText.textContent = '';
+      // }
 
-      navigator.mozL10n.setAttributes(
-        this.headerText, content.id, content.args
-      );
+      // navigator.mozL10n.setAttributes(
+      //   this.headerText, content.id, content.args
+      // );
     }
   },
 
@@ -1551,7 +1614,7 @@ var ThreadUI = {
     }
 
     if (message.type === 'mms' && !isNotDownloaded && !noAttachment) { // MMS
-      SMIL.parse(message, function(slideArray) {
+      SMIL.parse(message, (slideArray) => {
         pElement.appendChild(ThreadUI.createMmsContent(slideArray));
         this.scrollViewToBottom();
       });
@@ -1649,10 +1712,12 @@ var ThreadUI = {
     params.items.push(subjectItem);
 
     // If we are on a thread, we can call to SelectMessages
-    params.items.push({
-      l10nId: 'selectMessages-label',
-      method: this.startEdit.bind(this)
-    });
+    if (Navigation.isCurrentPanel('thread')) {
+      params.items.push({
+        l10nId: 'selectMessages-label',
+        method: this.startEdit.bind(this)
+      });
+    }
 
     // Last item is the Cancel button
     params.items.push({
@@ -1672,7 +1737,7 @@ var ThreadUI = {
     }
 
     if (!this.selectionHandler) {
-      LazyLoader.load('js/selection_handler.js', function() {
+      LazyLoader.load('js/selection_handler.js', () => {
         this.selectionHandler = new SelectionHandler({
           // Elements
           container: this.container,
@@ -1743,7 +1808,7 @@ var ThreadUI = {
 
       WaitingScreen.show();
       var items = this.selectionHandler.selectedList;
-      var delNumList = items.map(function(item) {return +item});
+      var delNumList = items.map(item => +item);
 
       // Complete deletion in DB and in UI
       MessageManager.deleteMessages(delNumList,
@@ -1835,7 +1900,7 @@ var ThreadUI = {
     // Click events originating from a "message-status" aside of an error
     // message should trigger a prompt for retransmission.
     if (elems.message.classList.contains('error') && elems.messageStatus) {
-      Utils.confirm('resend-confirmation').then(function() {
+      Utils.confirm('resend-confirmation').then(() => {
         this.resendMessage(elems.message.dataset.messageId);
       });
     }
@@ -1904,10 +1969,24 @@ var ThreadUI = {
           items:[]
         };
 
+        if (!lineClassList.contains('not-downloaded')) {
+          params.items.push({
+            l10nId: 'forward',
+            method: function forwardMessage(messageId) {
+              Navigation.toPanel('composer', {
+                forward: {
+                  messageId: messageId
+                }
+              });
+            },
+            params: [messageId]
+          });
+        }
+
         params.items.push(
           {
             l10nId: 'select-text',
-            method: function(node) {
+            method: (node) => {
               this.enableBubbleSelection(
                 node.querySelector('.message-content-body')
               );
@@ -1917,6 +1996,13 @@ var ThreadUI = {
           {
             l10nId: 'view-message-report',
             method: function showMessageReport(messageId) {
+              // Fetch the message by id for displaying corresponding message
+              // report. threadId here is to make sure thread is updatable
+              // when current view report panel.
+              Navigation.toPanel('report-view', {
+                id: messageId,
+                threadId: Threads.currentId
+              });
             },
             params: [messageId]
           },
@@ -1926,9 +2012,9 @@ var ThreadUI = {
               Utils.confirm(
                 'deleteMessage-confirmation', null,
                 { text: 'delete', className: 'danger' }
-              ).then(function() {
+              ).then(() => {
                 MessageManager.deleteMessages(
-                  messageId, function() { return ThreadUI.deleteUIMessages(messageId)}
+                  messageId, () => ThreadUI.deleteUIMessages(messageId)
                 );
               });
             },
@@ -2005,7 +2091,7 @@ var ThreadUI = {
         serviceId = opts.serviceId === undefined ? null : opts.serviceId,
         recipients;
 
-    var inComposer = false;
+    var inComposer = Navigation.isCurrentPanel('composer');
 
     // Depending where we are, we get different nums
     if (inComposer) {
@@ -2068,6 +2154,7 @@ var ThreadUI = {
 
       if (recipients.length > 1) {
         this.shouldChangePanelNextEvent = false;
+        Navigation.toPanel('thread-list');
         if (ActivityHandler.isInActivity()) {
           setTimeout(this.close.bind(this), this.LEAVE_ACTIVITY_DELAY);
         }
@@ -2488,15 +2575,21 @@ var ThreadUI = {
 
   onHeaderActivation: function thui_onHeaderActivation() {
     // Do nothing while in participants list view.
+    if (!Navigation.isCurrentPanel('thread')) {
+      return;
+    }
 
     var participants = Threads.active && Threads.active.participants;
 
     // >1 Participants will enter "group view"
     if (participants && participants.length > 1) {
+      Navigation.toPanel('group-view', {
+        id: Threads.currentId
+      });
       return;
     }
 
-    var number = this.headerText.dataset.number;
+    // var number = this.headerText.dataset.number;
 
     var tel, email;
     if (Settings.supportEmailRecipient && Utils.isEmailAddress(number)) {
@@ -2505,17 +2598,17 @@ var ThreadUI = {
       tel = number;
     }
 
-    if (this.headerText.dataset.isContact === 'true') {
-      this.promptContact({
-        number: number
-      });
-    } else {
-      this.prompt({
-        number: tel,
-        email: email,
-        isContact: false
-      });
-    }
+    // if (this.headerText.dataset.isContact === 'true') {
+    //   this.promptContact({
+    //     number: number
+    //   });
+    // } else {
+    //   this.prompt({
+    //     number: tel,
+    //     email: email,
+    //     isContact: false
+    //   });
+    // }
   },
 
   promptContact: function thui_promptContact(opts) {
@@ -2563,6 +2656,9 @@ var ThreadUI = {
 
   prompt: function thui_prompt(opt) {
     var complete = (function complete() {
+      if (!Navigation.isCurrentPanel('thread')) {
+        Navigation.toPanel('thread', { id: Threads.currentId });
+      }
     }).bind(this);
 
     var thread = Threads.get(Threads.currentId);
@@ -2698,7 +2794,9 @@ var ThreadUI = {
   onCreateContact: function thui_onCreateContact() {
     ThreadListUI.updateContactsInfo();
     // Update Header if needed
-    ThreadUI.updateHeaderData();
+    if (Navigation.isCurrentPanel('thread')) {
+      ThreadUI.updateHeaderData();
+    }
   },
 
   discardDraft: function thui_discardDraft() {

@@ -37,7 +37,7 @@ var TMPL = function createTemplate(tmpls) {
  The 1st level properties represents delivery status and 2nd level properties
  represents read status.
  */
-const REPORT_MAP = {
+var REPORT_MAP = {
   'not-applicable': {
     'not-applicable': 'not-applicable',
     'pending' : 'pending',
@@ -65,7 +65,7 @@ const REPORT_MAP = {
 };
 
 // Register the message events we wanted for report view refresh
-const MESSAGE_EVENTS = [
+var MESSAGE_EVENTS = [
   'message-failed-to-send',
   'message-delivered',
   'message-read',

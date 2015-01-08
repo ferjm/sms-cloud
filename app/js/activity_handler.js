@@ -12,7 +12,7 @@
  * Describes available data types that can be associated with the activities.
  * @enum {string}
  */
-const ActivityDataType = {
+var ActivityDataType = {
   IMAGE: 'image/*',
   AUDIO: 'audio/*',
   VIDEO: 'video/*',

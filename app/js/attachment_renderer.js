@@ -8,10 +8,10 @@
   'use strict';
   // do not create thumbnails for too big attachments
   // (see bug 805114 for a similar issue in Gallery)
-  const MAX_THUMBNAIL_GENERATION_SIZE = 5 * 1024 * 1024; // 5MB
+  var MAX_THUMBNAIL_GENERATION_SIZE = 5 * 1024 * 1024; // 5MB
 
   // Actual thumbnails size should be 10 rem (100px) * devicePixelRatio
-  const THUMBNAIL_SIZE = 100 * window.devicePixelRatio;
+  var THUMBNAIL_SIZE = 100 * window.devicePixelRatio;
 
   /**
    * A <div> container suits most of the cases where we want to display an
@@ -27,7 +27,7 @@
    * a simple block. Outside of the Compose area, a <div> container is still
    * fine -- and it's *way* faster.
    */
-  const RENDERERS = {
+  var RENDERERS = {
     draft: {
       createAttachmentContainer: function() {
         var container = document.createElement('iframe');

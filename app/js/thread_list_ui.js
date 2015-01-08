@@ -13,7 +13,7 @@
 (function(exports) {
 'use strict';
 
-const privateMembers = new WeakMap();
+var privateMembers = new WeakMap();
 
 function createBdiNode(content) {
   var bdi = document.createElement('bdi');
@@ -263,18 +263,14 @@ var ThreadListUI = {
         var parentThreadId = parent.dataset.threadId;
 
         if (parentThreadId) {
-          event.preventDefault();
+          // event.preventDefault();
           // TODO Bug 1014226 will introduce a draftId instead of threadId for
           // drafts, this will allow removing the test with is-draft here.
           if (parent.classList.contains('is-draft')) {
-            Navigation.toPanel('composer', {
-              draftId: +parentThreadId
-            });
+
           } else {
-            var thread = window.open('thread.html', '', 'mozhaidasheet');
-            thread.onload = function() {
-              thread.postMessage(JSON.stringify(Threads.get(parentThreadId)), window.location.origin);
-            };
+            var sms = new BroadcastChannel('sms');
+            sms.postMessage(parentThreadId);
           }
         }
 
@@ -288,7 +284,6 @@ var ThreadListUI = {
   launchComposer: function thui_launchComposer(e) {
     // prevent following the link, see also bug 1014219
     e.preventDefault();
-    Navigation.toPanel('composer');
   },
 
   checkInputs: function thlui_checkInputs() {
@@ -572,9 +567,6 @@ var ThreadListUI = {
       // If one of the requested threads is also the currently displayed thread,
       // update the header immediately
       // TODO: Revise necessity of this code in bug 1050823
-      if (Navigation.isCurrentPanel('thread', { id: thread.id })) {
-        ThreadUI.updateHeaderData();
-      }
 
       if (!hasThreads) {
         hasThreads = true;
@@ -688,7 +680,7 @@ var ThreadListUI = {
 
     // Render markup with thread data
     li.innerHTML = this.tmpl.thread.interpolate({
-      hash: isDraft ? '#composer' : '#thread=' + id,
+      hash: isDraft ? '#composer' : 'thread.html?id=' + id,
       mode: isDraft ? 'drafts' : 'threads',
       id: isDraft ? draftId : id,
       number: number,
@@ -788,9 +780,6 @@ var ThreadListUI = {
 
   onMessageReceived: function thlui_onMessageReceived(e) {
     // If user currently in the same thread, then mark thread as read
-    var markAsRead = Navigation.isCurrentPanel('thread', {
-      id: e.message.threadId
-    });
 
     this.updateThread(e.message, { unread: !markAsRead });
   },

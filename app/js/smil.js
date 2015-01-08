@@ -56,7 +56,7 @@ Layout of a mms message with 3 slides
 // See the description of these formats in the comment before
 function SMIL_generateSlides(data, slide, slideIndex) {
   // default duration to 5 seconds per slide
-  const DURATION = 5000;
+  var DURATION = 5000;
 
   var id;
   var blobType;
@@ -351,7 +351,7 @@ window.SMIL = {
   // SMIL.generate - takes a array with slides and return smil string and
   // attachment array.
   generate: function SMIL_generate(slides) {
-    const HEADER = '<head><layout>' +
+    var HEADER = '<head><layout>' +
                  '<root-layout width="320px" height="480px"/>' +
                  '<region id="Image" left="0px" top="0px"' +
                  ' width="320px" height="320px" fit="meet"/>' +

@@ -5,7 +5,7 @@
 
   /**
    * Class that is applied to body whenever application is ready for user.
-   * @const {string}
+   * @var {string}
    */
   var APPLICATION_READY_CLASS_NAME = 'js-app-ready';
 

@@ -6,7 +6,7 @@
 
   var worker = null;
 
-  const ALLOWED_EVENTS = ['drafts-changed'];
+  var ALLOWED_EVENTS = ['drafts-changed'];
 
   function postMessage(name, parameters) {
     if (!worker) {
@@ -23,7 +23,7 @@
     );
   }
 
-  const Dispatcher = EventDispatcher.mixin({
+  var Dispatcher = EventDispatcher.mixin({
     connect: function() {
       if (worker) {
         return;
@@ -57,7 +57,7 @@
 
   // Save and override original emit method to avoid firing events in the same
   // application instance.
-  const originalEmitter = Dispatcher.emit.bind(Dispatcher);
+  var originalEmitter = Dispatcher.emit.bind(Dispatcher);
 
   Dispatcher.emit = function(eventName, parameters) {
     if (ALLOWED_EVENTS.indexOf(eventName) < 0) {

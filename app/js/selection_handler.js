@@ -3,7 +3,7 @@
 (function(exports) {
 'use strict';
 
-const REQUIRED_KEYS = [
+var REQUIRED_KEYS = [
   // elements
   'container',
   'checkUncheckAllButton',

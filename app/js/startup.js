@@ -94,8 +94,23 @@ var Startup = {
       });
     }
 
+    function addPrerender() {
+      var link = document.createElement('link');
+      link.setAttribute('rel', 'prerender');
+      link.setAttribute('href', 'thread.html');
+      document.head.appendChild(link);
+    }
+
+    document.addEventListener('visibilitychange',
+      function onVisible(e) {
+        if (!document.hidden) {
+          addPrerender();
+        }
+    });
+
     var loaded = function() {
       window.removeEventListener('DOMContentLoaded', loaded);
+      addPrerender();
 
       window.performance.mark('navigationLoaded');
       window.dispatchEvent(new CustomEvent('moz-chrome-dom-loaded'));

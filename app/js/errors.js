@@ -14,7 +14,7 @@
    *     error dialog should be executed once user selects confirm action.
    * @type {Map.<string, Object>}
    */
-  const ERRORS = new Map();
+  var ERRORS = new Map();
 
   function initErrorsMap() {
     ERRORS.set('NoSimCardError', {

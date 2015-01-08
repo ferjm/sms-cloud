@@ -221,7 +221,7 @@ var Compose = (function() {
     }
 
     var imgNodes = [];
-    attachments.forEach(function(attachment, node) {
+    attachments.forEach((attachment, node) => {
       if (attachment.type === 'img') {
         imgNodes.push(node);
       }
@@ -595,7 +595,7 @@ var Compose = (function() {
       this.onTypeChange();
 
       // Dispose attachments
-      attachments.forEach(function(attachment, node) {return disposeAttachmentNode(node)});
+      attachments.forEach((attachment, node) => disposeAttachmentNode(node));
 
       dom.message.innerHTML = '<br>';
 
@@ -636,9 +636,7 @@ var Compose = (function() {
       /* Bug 1040144: replace ThreadUI direct invocation by a instanciation-time
        * property
        */
-      var hasEmailRecipient = ThreadUI.recipients.list.some(
-        function(recipient) { return recipient.isEmail; }
-      );
+      var hasEmailRecipient = false;
 
       /* Note: in the future, we'll maybe want to force 'mms' from the UI */
       var newType =
@@ -667,9 +665,9 @@ var Compose = (function() {
 
       /* Bug 1040144: replace ThreadUI direct invocation by a instanciation-time
        * property */
-      var recipients = ThreadUI.recipients;
-      var recipientsValue = recipients.inputValue;
-      var hasRecipients = true;
+      var recipients = null;
+      var recipientsValue = null;
+      var hasRecipients = false;
 
       // Set hasRecipients to true based on the following conditions:
       //
@@ -690,7 +688,8 @@ var Compose = (function() {
       disableSendMessage = disableSendMessage || !messageNotLong;
 
       // should disable if we have no recipients in the "new thread" view
-      disableSendMessage = disableSendMessage || !hasRecipients;
+      disableSendMessage = disableSendMessage ||
+        (Navigation.isCurrentPanel('composer') && !hasRecipients);
 
       this.disable(disableSendMessage);
     },

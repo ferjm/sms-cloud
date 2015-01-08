@@ -5,28 +5,28 @@
    * Max number of port references after which clean up attempt is made.
    * @type {number}
    */
-  const MAX_OPEN_PORTS_NUMBER = 3;
+  var MAX_OPEN_PORTS_NUMBER = 3;
 
   /**
    * Time during which port should reply on "ping" request, otherwise it's
    * considered as dead and reference to it is removed.
    * @type {number}
    */
-  const PING_TIMEOUT = 3000;
+  var PING_TIMEOUT = 3000;
 
   /**
    * Currently active ping requests. Key is the port being pinged, value is the
    * setTimeout identifier.
    * @type {Map.<MessagePort, number>}
    */
-  const pingRequests = new WeakMap();
+  var pingRequests = new WeakMap();
 
   /**
    * List of connected port references which are used to listen and broadcast
    * events.
    * @type {Set.<MessagePort>}
    */
-  const ports = new Set();
+  var ports = new Set();
 
   function closePort(port) {
     port.removeEventListener('message', onMessage);
