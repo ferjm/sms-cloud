@@ -146,6 +146,27 @@
     return getDocByApiId(threadsDB, id);
   };
 
+  DBManager.sync = function() {
+    var EXTERNAL_DB_HOST = 'https://sms-cloud.iriscouch.com/';
+
+    var promises = [];
+    var threadsSync = new Promise(function(resolve, reject) {
+      PouchDB.sync('threads', EXTERNAL_DB_HOST + 'threads').
+        on('complete', resolve).
+        on('error',reject);
+    });
+    var messagesSync = new Promise(function(resolve, reject) {
+      PouchDB.sync('messages', EXTERNAL_DB_HOST + 'messages').
+      on('complete', resolve).
+      on('error',reject);
+    });
+
+    promises.push(threadsSync);
+    promises.push(messagesSync);
+
+    return Promise.all(promises);
+  };
+
   function getDocByApiId(db, id) {
     return db.query(function(doc, emit) {
       if (doc.api_id === id) {

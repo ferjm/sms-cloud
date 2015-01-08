@@ -172,7 +172,13 @@
     throw new Error('retrieveMMS not implemented');
   };
 
+  // Sync options
+  MultiMobileMessage.sync = function() {
+    DBManager.sync();
+  };
+
   exports.MultiMobileMessage = MultiMobileMessage;
 })(window);
 
 navigator.mozMobileMessage = MultiMobileMessage;
+navigator.mozMobileMessage.sync();
