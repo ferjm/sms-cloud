@@ -1,6 +1,7 @@
 (function(exports) {
 
   var oldMobileMessage = null;
+  var syncInterval = null;
 
   var MultiMobileMessage = {};
 
@@ -174,6 +175,10 @@
 
   // Sync options
   MultiMobileMessage.sync = function() {
+    // Don't use live long polling sync, since sms wont trigger the events
+    // needed to display
+    clearInterval(syncInterval);
+    syncInterval = setInterval(DBManager.sync, 30000);
     DBManager.sync();
   };
 

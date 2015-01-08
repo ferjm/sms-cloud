@@ -105,6 +105,10 @@ var ThreadListUI = {
     });
 
     this.sticky = null;
+
+    EventManager.addEventListener('threadsSync', (function() {
+      this.renderThreads();
+    }).bind(this));
   },
 
   initStickyHeader: function thlui_initStickyHeader() {
@@ -404,7 +408,7 @@ var ThreadListUI = {
         exitEditMode();
         return;
       }
-      
+
       threadCountToDelete = threadIdsToDelete.length;
 
       threadIdsToDelete.forEach(function(threadId) {

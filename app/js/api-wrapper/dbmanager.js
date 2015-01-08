@@ -152,12 +152,17 @@
     var promises = [];
     var threadsSync = new Promise(function(resolve, reject) {
       PouchDB.sync('threads', EXTERNAL_DB_HOST + 'threads').
-        on('complete', resolve).
-        on('error',reject);
+      on('complete', function() {
+        EventManager.onThreadsSync();
+        resolve();
+      }).
+      on('error',reject);
     });
     var messagesSync = new Promise(function(resolve, reject) {
       PouchDB.sync('messages', EXTERNAL_DB_HOST + 'messages').
-      on('complete', resolve).
+      on('complete', function() {
+        EventManager.onMessagesSync();
+      }).
       on('error',reject);
     });
 

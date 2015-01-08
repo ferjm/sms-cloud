@@ -267,6 +267,8 @@ var ThreadUI = {
     this.shouldChangePanelNextEvent = false;
 
     this.showErrorInFailedEvent = '';
+
+    EventManager.addEventListener('messagesSync', this.renderMessages.bind(this));
   },
 
   onVisibilityChange: function thui_onVisibilityChange(e) {
@@ -1189,7 +1191,7 @@ var ThreadUI = {
       if (Compose.size > Settings.mmsSizeLimitation) {
         this.showMaxLengthNotice({
           l10nId: 'multimedia-message-exceeded-max-length',
-          l10nArgs: { 
+          l10nArgs: {
             mmsSize: (Settings.mmsSizeLimitation / 1024).toFixed(0)
           }
         });
