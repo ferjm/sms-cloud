@@ -665,8 +665,8 @@ var Compose = (function() {
 
       /* Bug 1040144: replace ThreadUI direct invocation by a instanciation-time
        * property */
-      var recipients = null;
-      var recipientsValue = null;
+      var recipients = ThreadUI.recipients;
+      var recipientsValue = recipients.inputValue;
       var hasRecipients = false;
 
       // Set hasRecipients to true based on the following conditions:
@@ -688,8 +688,7 @@ var Compose = (function() {
       disableSendMessage = disableSendMessage || !messageNotLong;
 
       // should disable if we have no recipients in the "new thread" view
-      disableSendMessage = disableSendMessage ||
-        (Navigation.isCurrentPanel('composer') && !hasRecipients);
+      disableSendMessage = disableSendMessage || !hasRecipients;
 
       this.disable(disableSendMessage);
     },

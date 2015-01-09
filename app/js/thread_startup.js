@@ -33,6 +33,7 @@ try {
 function loadThread(thread) {
   var iframe = document.getElementById('thread_content');
   iframe.src = 'thread_content.html?id=' + thread.id;
+  MessageManager.init();
   ThreadUI.init();
   ThreadUI.updateHeaderData(thread);
 }

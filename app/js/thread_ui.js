@@ -326,7 +326,6 @@ var ThreadUI = {
         this.emit('recipientschange');
       }
     }).bind(this);
-
     if (this.recipients) {
       this.recipients.length = 0;
       this.recipients.visible('singleline');
@@ -386,7 +385,7 @@ var ThreadUI = {
   },
 
   setHeaderAction: function thui_setHeaderAction(icon) {
-    // this.header.setAttribute('action', icon);
+    this.header.setAttribute('action', icon);
   },
 
   messageComposerInputHandler: function thui_messageInputHandler(event) {
@@ -1267,6 +1266,10 @@ var ThreadUI = {
 
     number = thread.participants[0];
 
+    for (var i = thread.participants.length - 1; i >= 0; i--) {
+      this.recipients.add({number: thread.participants[i]});
+    };
+
     // Add data to contact activity interaction
     this.headerText.dataset.number = number;
 
@@ -2024,18 +2027,11 @@ var ThreadUI = {
   },
 
   onSendClick: function thui_onSendClick() {
-    if (Compose.isEmpty()) {
-      return;
+    var options = {
+      recipients: this.recipients,
+      content: Compose.getText()
     }
-
-    // Assimilation 3 (see "Assimilations" above)
-    // User may return to recipients, type a new recipient
-    // manually and then click the sendButton without "accepting"
-    // the recipient.
-    this.assimilateRecipients();
-
-    // not sure why this happens - replace me if you know
-    this.container.classList.remove('hide');
+    MessageManager.sendSMS(options);
   },
 
   // FIXME/bug 983411: phoneNumber not needed.

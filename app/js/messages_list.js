@@ -111,57 +111,10 @@ var ThreadUI = {
     document.addEventListener('visibilitychange',
                               this.onVisibilityChange);
 
-    // this.toField.addEventListener(
-    //   'keypress', this.toFieldKeypress.bind(this), true
-    // );
-
-    // this.toField.addEventListener(
-    //   'input', this.toFieldInput.bind(this), true
-    // );
-
-    // this.toField.addEventListener(
-    //   'focus', this.toFieldInput.bind(this), true
-    // );
-
-    // this.sendButton.addEventListener(
-    //   'click', this.onSendClick.bind(this)
-    // );
-
-    // this.sendButton.addEventListener(
-    //   'contextmenu', this.onSendClick.bind(this)
-    // );
 
     this.container.addEventListener(
       'scroll', this.manageScroll.bind(this)
     );
-
-    // this.editHeader.addEventListener(
-    //   'action', this.cancelEdit.bind(this)
-    // );
-
-    // this.header.addEventListener(
-    //   'action', this.onHeaderAction.bind(this)
-    // );
-
-    // this.optionsButton.addEventListener(
-    //   'click', this.showOptions.bind(this)
-    // );
-
-    // this.callNumberButton.addEventListener('click', function() {
-    //   ActivityPicker.dial(Threads.active.participants[0]);
-    // });
-
-    // this.deleteButton.addEventListener(
-    //   'click', this.delete.bind(this)
-    // );
-
-    // this.headerText.addEventListener(
-    //   'click', this.onHeaderActivation.bind(this)
-    // );
-
-    // this.newMessageNotice.addEventListener(
-    //   'click', this.onNewMessageNoticeClick.bind(this)
-    // );
 
     this.container.addEventListener(
       'click', this.handleEvent.bind(this)
@@ -169,36 +122,11 @@ var ThreadUI = {
     this.container.addEventListener(
       'contextmenu', this.handleEvent.bind(this)
     );
-    // this.editForm.addEventListener(
-    //   'submit', this.handleEvent.bind(this)
-    // );
-    // this.composeForm.addEventListener(
-    //   'submit', this.handleEvent.bind(this)
-    // );
-    // For picking a contact from Contacts. It's mouse down for
-    // avoiding weird effect of keyboard, as in 'send' button.
-    // this.contactPickButton.addEventListener(
-    //   'mousedown', this.requestContact.bind(this)
-    // );
-
-    // Avoid click event propagate to recipient view, otherwise Recipients.View
-    // constructor will attach click event on the messages-to-field element.
-    // this.contactPickButton.addEventListener(
-    //   'click', function onClick(event) {
-    //     event.stopPropagation();
-    //   }
-    // );
 
     navigator.mozContacts.addEventListener(
       'contactchange',
       this.updateHeaderData.bind(this)
     );
-
-    // this.recipientSuggestions.addEventListener(
-    //   'click',
-    //   this.onRecipientSuggestionClick.bind(this)
-    // );
-
     MessageManager.on('message-sending', this.onMessageSending.bind(this));
     MessageManager.on('message-sent', this.onMessageSent.bind(this));
     MessageManager.on('message-received', this.onMessageReceived.bind(this));
