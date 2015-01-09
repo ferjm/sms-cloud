@@ -13,7 +13,7 @@
 
   };
 
-  function trigger(name, value) {
+  EventManager.trigger = function(name, value) {
     var handlers = _listeners[name] || [];
 
     handlers.forEach(function(handler) {
@@ -22,11 +22,11 @@
   };
 
   EventManager.onThreadsSync = function() {
-    trigger('threadsSync', {});
+    this.trigger('threadsSync', {});
   };
 
   EventManager.onMessagesSync = function() {
-    trigger('messagesSync', {});
+    this.trigger('messagesSync', {});
   };
 
   EventManager.reset = function() {

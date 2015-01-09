@@ -33,9 +33,14 @@
       msg.id = msg.api_id;
       var sendInfo = {
         type: 'sent',
-        message: message
+        message: msg
       };
       EventManager.trigger('sending', sendInfo);
+      // Include the msg information into the request object,
+      // will be used to later on update the message with data
+      // coming from the real api.
+      request.localMessage = msg;
+      ProviderManager.send(request, number, text, success, error);
     }, error);
     return [request];
   };
@@ -182,8 +187,13 @@
     DBManager.sync();
   };
 
+  MultiMobileMessage.stopSync = function() {
+    clearInterval(syncInterval);
+  }
+
   exports.MultiMobileMessage = MultiMobileMessage;
 })(window);
 
-navigator.mozMobileMessage = MultiMobileMessage;
-navigator.mozMobileMessage.sync();
+//navigator.mozMobileMessage = MultiMobileMessage;
+MultiMobileMessage.start();
+MultiMobileMessage.sync();

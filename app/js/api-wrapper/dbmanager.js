@@ -114,6 +114,28 @@
       });
   };
 
+  DBManager.updateMessage = function(messageId, apiMsg) {
+    return messagesDB.get(messageId).then(function(doc) {
+      debugger;
+      if (!doc) {
+        return Promise.reject();
+      }
+
+      for(var elem in apiMsg) {
+        if (elem !== 'threadId') {
+          // Don't update thread, otherwise we will be missing conversations
+          doc[elem] = apiMsg[elem];
+        }
+      }
+
+      doc.api_id = apiMsg.id;
+      delete doc.id;
+
+      return messagesDB.put(doc);
+
+    });
+  };
+
   function getMaxFromField(db, field) {
     return db.query(function (doc, emit) {
       emit(doc[field]);
