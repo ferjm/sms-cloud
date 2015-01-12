@@ -1,7 +1,7 @@
 {
    "name":"Messages-Cloud",
    "description":"Gaia Messages",
-   "type":"certified",
+   "type":"web",
    "launch_path":"/list.html",
    "developer":{
       "name":"The Gaia Team",
