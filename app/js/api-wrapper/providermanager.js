@@ -36,11 +36,13 @@
 
   // Listen to all API events and broadcast them to anyone listening to the
   // EventManager
-  events.forEach(function(eventName) {
-    SMSProvider.mozMobileMessage.addEventListener(eventName, function(evt) {
-      EventManager.trigger(eventName, evt);
+  if (SMSProvider.mozMobileMessage) {
+    events.forEach(function(eventName) {
+      SMSProvider.mozMobileMessage.addEventListener(eventName, function(evt) {
+        EventManager.trigger(eventName, evt);
+      });
     });
-  });
+  }
 
   exports.SMSProvider = SMSProvider;
 })(window);
