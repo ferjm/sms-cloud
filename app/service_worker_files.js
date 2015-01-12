@@ -43,6 +43,7 @@ var kCacheFiles = [
 'js/protocols/bridge.js',
 'js/protocols/ipdl/PService.ipdl',
 'js/protocols/ipdl/PUpdate.ipdl',
+'js/protocols/ipdl/PSession.ipdl',
 'js/protocols/ipdl.js',
 'js/protocols/ipdl_parser.js',
 'js/protocols/message.js',

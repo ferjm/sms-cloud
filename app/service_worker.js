@@ -26,6 +26,7 @@ worker.onfetch = function(e) {
       return response || fetch(e.request);
     }, function(error) {
       debug('Fetching ' + e.request.url + ' error. ' + error);
+      return fetch(e.request);
     })
   )
 };

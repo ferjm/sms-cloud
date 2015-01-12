@@ -6,4 +6,4 @@ protocol PSession
     RemoveSession(session);
 
   window:
-}
+};

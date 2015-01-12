@@ -1,5 +1,6 @@
 'use strict';
 
+importScripts('/sms-cloud/app/js/sw-utils.js');
 importScripts('/sms-cloud/app/js/protocols/protocol_helper.js');
 
 var protocol = new IPDLProtocol('session');
