@@ -15,7 +15,7 @@ window.GaiaSimPicker = (function(win) {
 
   // Allow baseurl to be overridden (used for demo page)
   var baseurl = window.GaiaSimPickerBaseurl ||
-    '/shared/elements/gaia_sim_picker/';
+    'shared/elements/gaia_sim_picker/';
 
   proto.createdCallback = function() {
     var shadow = this.createShadowRoot();
@@ -24,7 +24,7 @@ window.GaiaSimPicker = (function(win) {
 
     this._menu = this.shadowRoot.querySelector('gaia-menu');
 
-    LazyLoader.load(['/shared/js/component_utils.js'], function() {
+    LazyLoader.load(['shared/js/component_utils.js'], function() {
       ComponentUtils.style.call(this, baseurl);
     }.bind(this));
   };

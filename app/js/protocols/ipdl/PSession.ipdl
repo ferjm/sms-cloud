@@ -1,0 +1,9 @@
+
+protocol PSession
+{
+  serviceworker:
+    SaveSession(session);
+    RemoveSession(session);
+
+  window:
+}

@@ -719,6 +719,31 @@
       return deferred.promise;
     },
 
+    debug: function(str) {
+      console.log('MainPage: ' + str);
+      if ('dump' in window) {
+        dump('MainPage: ' + str + '\n');
+      }
+    },
+
+    doSoftReload: function() {
+      // XXX It seems to be some cache issues on both chrome and Firefox.
+      // But reloading the url this way makes it works as expected.
+      setTimeout(function() { location = location; });
+    },
+
+    importScripts: function(script) {
+      if (document.querySelector('script[src="' + script + '"]')) {
+        return;
+      }
+
+      var element = document.createElement('script');
+      element.setAttribute('src', script);
+      element.async = false;
+      element.defer = false;
+      document.head.appendChild(element);
+    },
+
     /**
      * Promise related utilities
      */
@@ -774,5 +799,8 @@
   };
 
   exports.Utils = Utils;
+  exports.debug = Utils.debug;
+  exports.importScripts = Utils.importScripts;
+  exports.doSoftReload = Utils.doSoftReload;
 
 }(this));

@@ -17,7 +17,7 @@ var MultiSimActionButton = function MultiSimActionButton(
   this._button.addEventListener('click', this._click.bind(this));
 
   var self = this;
-  LazyLoader.load(['/shared/js/settings_listener.js'], function() {
+  LazyLoader.load(['shared/js/settings_listener.js'], function() {
     SettingsListener.observe(settingsKey, 0,
                              self._settingsObserver.bind(self));
   });
@@ -100,7 +100,7 @@ MultiSimActionButton.prototype._click = function(event) {
 MultiSimActionButton.prototype._getOrPickSim =
 function(cardIndex, phoneNumber) {
   var self = this;
-  LazyLoader.load(['/shared/elements/gaia_sim_picker/script.js'], function() {
+  LazyLoader.load(['shared/elements/gaia_sim_picker/script.js'], function() {
     self._simPicker = document.getElementById('sim-picker');
     self._simPicker.getOrPick(cardIndex, phoneNumber,
                               self.performAction.bind(self));

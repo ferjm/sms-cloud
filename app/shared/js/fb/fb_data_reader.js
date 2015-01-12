@@ -234,8 +234,8 @@ this.fb = fb;
 
   function doSearchByPhone(number, outRequest) {
     var normalizedNumber = navigator.mozPhoneNumberService.normalize(number);
-    LazyLoader.load(['/shared/js/fb/fb_tel_index.js',
-                    '/shared/js/binary_search.js'], function() {
+    LazyLoader.load(['shared/js/fb/fb_tel_index.js',
+                     'shared/js/binary_search.js'], function() {
       var toSearchNumber = normalizedNumber;
       // TODO: Temporal way of searching for international numbers
       // A follow-up is needed by using PhoneNumber.js exposed to Gaia
