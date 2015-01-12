@@ -25,12 +25,12 @@ addEventListener('load', function onLoad(e) {
       }
 
       if (navigator.serviceWorker.controller) {
-        //window.sessionStoreAPI = new SessionStoreAPI();
+        importScripts('/sms-cloud/app/js/sessionstore/api.js');
+        window.sessionStoreAPI = new SessionStoreAPI();
         //window.updateAPI = new UpdateAPI();
         //window.urlOverladingAPI = new UrlOverloadingAPI();
       }
 
-      callback && callback();
       debug('Registered');
     }).bind(this),
 

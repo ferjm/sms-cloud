@@ -6,6 +6,12 @@ function SessionStoreAPI() {
   this.protocol = new IPDLProtocol('session');
 };
 
-ServiceAPI.prototype.saveSession = function(session) {
+SessionStoreAPI.prototype.saveSession = function(session) {
+  debug('Sending saveSession');
   return this.protocol.sendSaveSession(session);
+};
+
+SessionStoreAPI.prototype.removeSession = function(session) {
+  debug('Sending removeSession');
+  return this.protocol.sendRemoveSession(session);
 };

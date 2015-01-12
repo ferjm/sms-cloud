@@ -52,6 +52,8 @@ var kCacheFiles = [
 'js/protocols/utils/uuid.js',
 'js/recipients.js',
 'js/selection_handler.js',
+'js/sessionstore/api.js',
+'js/sessionstore/worker_api.js',
 'js/settings.js',
 'js/shared_components.js',
 'js/silent_sms.js',
