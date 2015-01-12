@@ -18,8 +18,14 @@ worker.oninstall = function(e) {
 worker.onfetch = function(e) {
   debug(e.type + ': ' + e.request.url);
 
+  var url = e.request.url;
+
+  if (url.indexOf('?') != -1) {
+    url = url.split('?')[0];
+  }
+
   e.respondWith(
-    caches.match(e.request.url).then(function(response) {
+    caches.match(url).then(function(response) {
       if (!response) {
         debug('going do to a fetch for for ' + e.request.url + ', might go bad\n');
       }
