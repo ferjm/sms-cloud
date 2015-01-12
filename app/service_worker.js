@@ -26,13 +26,13 @@ worker.onfetch = function(e) {
 
   e.respondWith(
     caches.match(url).then(function(response) {
-      if (!response) {
-        debug('going do to a fetch for for ' + e.request.url + ', might go bad\n');
-      }
-      return response || fetch(e.request);
+      return response;
     }, function(error) {
       debug('Fetching ' + e.request.url + ' error. ' + error);
-      return fetch(e.request);
+      // XXX Ideally we should try to fetch this from the network,
+      //     but unfortunately the fetch API is not working :( so
+      //     we just reject the promise.
+      return Promise.reject();
     })
   )
 };
