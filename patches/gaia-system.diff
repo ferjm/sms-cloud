@@ -1,31 +1,39 @@
 diff --git a/apps/system/js/app_window.js b/apps/system/js/app_window.js
-index be5ac45..e3369f5 100644
+index be5ac45..b4fb478 100644
 --- a/apps/system/js/app_window.js
 +++ b/apps/system/js/app_window.js
-@@ -626,6 +626,27 @@
+@@ -626,6 +626,35 @@
      if (this.config.stayBackground || this.isHomescreen) {
        this.setVisible(false);
      }
 +    var self = this;
 +    var child;
-+    this.iframe.addEventListener('mozbrowserprerenderchange', function(e) {
-+      console.debug('mozbrowserprerenderchange', e.detail.href);
-+      if (!child) {
-+        child = self.childWindowFactory.createChildWindow({
-+          detail: {
-+            url: e.detail.href,
-+            frameElement: null
-+          }
-+        }, true);
-+      }
 +
-+      child.iframe.addEventListener('mozbrowserclose', function() {
-+        child = null;
-+      });
++    function createChild(url) {
++      return self.childWindowFactory.createChildWindow({
++        detail: {
++          url: url,
++          frameElement: null
++        }
++      }, true);
++    }
++
++    this.iframe.addEventListener('mozbrowserprerenderchange', function(e) {
++      console.debug('mozbrowserprerenderchange', child);
++      if (!child) {
++        child = createChild(e.detail.href);
++      } else {
++        console.debug('Already a child!');
++        child.destroy();
++        child = createChild(e.detail.href);
++      }
 +    });
 +
 +    this.iframe.addEventListener('mozbrowseropenwindow', function(e) {
-+      child.requestOpen();
++      console.debug('mozbrowseropenwindow', e.detail.href);
++      child.tryWaitForFullRepaint(function() {
++        child.requestOpen();
++      });
 +    });
  
      /**
