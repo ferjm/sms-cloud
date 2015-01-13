@@ -2,8 +2,8 @@
 protocol PSession
 {
   serviceworker:
-    SaveSession(session);
-    RemoveSession(session);
+    SaveSession(url, markup);
+    RemoveSession(url);
 
   window:
 };

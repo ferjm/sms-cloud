@@ -21,7 +21,11 @@ SessionStoreWorker.prototype.saveSession = function(resolve, reject, args) {
   }
 
   caches.open(SESSION_STORE).then(function(cache) {
-    return cache.put(args.url, args.markup)
+    return cache.put(args.url, new Response(args.markup, {
+      headers: {
+        'Content-Type': 'text/html'
+      }
+    }))
   }).then(function() {
     debug('Session saved for ' + args.url);
     resolve();

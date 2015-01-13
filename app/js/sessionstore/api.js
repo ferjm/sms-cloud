@@ -8,10 +8,7 @@ function SessionStoreAPI() {
 
 SessionStoreAPI.prototype.saveSession = function(url, markup) {
   debug('Sending saveSession for ' + url);
-  return this.protocol.sendSaveSession(JSON.stringify({
-    url: url,
-    markup: markup
-  }));
+  return this.protocol.sendSaveSession(url, markup);
 };
 
 SessionStoreAPI.prototype.removeSession = function(session) {
