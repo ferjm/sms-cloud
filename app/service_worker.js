@@ -3,6 +3,7 @@
 importScripts('/sms-cloud/app/js/sw-utils.js');
 
 var worker = new ServiceWorker();
+var sessionStore;
 
 worker.oninstall = function(e) {
   debug('oninstall');
@@ -13,6 +14,13 @@ worker.oninstall = function(e) {
       return cache.addAll(kCacheFiles);
     })
   );
+};
+
+worker.onactivate = function(e) {
+  debug('onactivate');
+
+  importScripts('/sms-cloud/app/js/sessionstore/worker_api.js');
+  sessionStore = new SessionStoreWorker();
 };
 
 worker.onfetch = function(e) {

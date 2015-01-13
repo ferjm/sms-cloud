@@ -1384,6 +1384,8 @@ var ThreadUI = {
         this.showFirstChunk();
       }
 
+      console.log("Messages rendered");
+
       if (callback) {
         callback();
       }

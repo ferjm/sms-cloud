@@ -500,6 +500,9 @@ var ThreadListUI = {
     var self = this;
     return Drafts.request(force).then(function() {
       Drafts.forEach(function(draft, threadId) {
+        if (!draft) {
+          return;
+        }
         if (threadId) {
           // Find draft-containing threads that have already been rendered
           // and update them so they mark themselves appropriately
@@ -544,6 +547,14 @@ var ThreadListUI = {
     }
 
     this.sticky && this.sticky.refresh();
+
+    window.dump("Finalized rendering thread list\n");
+
+    if (!window.sessionStoreAPI) {
+      return;
+    }
+
+    window.sessionStoreAPI.saveSession();
   },
 
   renderThreads: function thlui_renderThreads(firstViewDoneCb, allDoneCb) {
@@ -632,7 +643,7 @@ var ThreadListUI = {
     // A an existing conversation "has" a draft
     // (or it doesn't, depending on the value
     // returned by thread.hasDrafts)
-    var hasDrafts = isDraft ? false : thread.hasDrafts;
+    var hasDrafts = false; //isDraft ? false : thread.hasDrafts;
 
     if (hasDrafts) {
       draft = Drafts.byThreadId(thread.id).latest;
@@ -814,7 +825,7 @@ var ThreadListUI = {
     var drafts = Drafts.byThreadId(thread.id);
     var firstThreadInContainer = false;
 
-    if (drafts.length) {
+    if (drafts.length && drafts.latest) {
       timestamp = Math.max(drafts.latest.timestamp, timestamp);
     }
 
