@@ -35,8 +35,19 @@ SessionStoreWorker.prototype.saveSession = function(resolve, reject, args) {
   });
 };
 
-
 SessionStoreWorker.prototype.removeSession = function(resolve, reject, args) {
   debug('Got removeSession for ' + args.url);
   resolve();
 };
+
+SessionStoreWorker.prototype.match = function(url) {
+  debug('Looking for ' + url + ' in session store');
+  return caches.open(SESSION_STORE).then(function(cache) {
+    return cache.match(url).then(function(response) {
+      if (!response) {
+        return Promise.reject();
+      }
+      return response;
+    })
+  });
+}
