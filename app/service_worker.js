@@ -19,12 +19,16 @@ worker.oninstall = function(e) {
 worker.onactivate = function(e) {
   debug('onactivate');
 
-  importScripts('/sms-cloud/app/js/sessionstore/worker_api.js');
-  sessionStore = new SessionStoreWorker();
+  try {
+    importScripts('/sms-cloud/app/js/sessionstore/worker_api.js');
+    sessionStore = new SessionStoreWorker();
+  } catch (err) {
+    debug('ERROR creating sessionStore ' + err + ' ' + err.stack);
+  }
 };
 
 worker.onfetch = function(e) {
-  debug(e.type + ': ' + e.request.url);
+  debug (e.type + ': ' + e.request.url);
 
   var url = e.request.url;
 
@@ -35,12 +39,8 @@ worker.onfetch = function(e) {
   e.respondWith(
     caches.match(url).then(function(response) {
       return response;
-    }, function(error) {
-      debug('Fetching ' + e.request.url + ' error. ' + error);
-      // XXX Ideally we should try to fetch this from the network,
-      //     but unfortunately the fetch API is not working :( so
-      //     we just reject the promise.
-      return Promise.reject();
+    }).catch(function(error) {
+      return event.default();
     })
   )
 };

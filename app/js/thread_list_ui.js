@@ -613,6 +613,13 @@ var ThreadListUI = {
         window.dispatchEvent(new CustomEvent('moz-app-visually-complete'));
         firstViewDone();
       }
+
+      debug('Finished rendering threads. Saving session now for ' +
+            window.location);
+      if (window.sessionStoreAPI) {
+        var markup = document.documentElement.innerHTML;
+        window.sessionStoreAPI.saveSession(window.location.href, markup);
+      }
     }
 
     var renderingOptions = {
