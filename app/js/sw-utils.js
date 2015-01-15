@@ -31,6 +31,17 @@ function getContentType(filename) {
   return 'text/plain';
 };
 
+// The cache API doesn't take into account the query parameters, so we
+// need to create a different url including the query parameters
+// information in the path.
+function normalizeUrl(url) {
+  if (url.indexOf('?') == -1) {
+    return url;
+  }
+
+  return url.replace("?","/").replace("=", "/");
+};
+
 function ServiceWorker() {
   // lifecycle events
   addEventListener('activate', this);

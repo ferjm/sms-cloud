@@ -1328,12 +1328,25 @@ var ThreadUI = {
     return container;
   },
 
+  saveSession: function() {
+    if (!window.sessionStoreAPI) {
+      debug("Creating session store for this window");
+      window.sessionStoreAPI = new SessionStoreAPI();
+    }
+    window.sessionStoreAPI.saveSession(window.location.href,
+                                       document.documentElement.innerHTML);
+  },
+
   // Method for rendering the list of messages using infinite scroll
   renderMessages: function thui_renderMessages(threadId, callback) {
     var onMessagesRendered = (function messagesRendered() {
       if (this.messageIndex < this.CHUNK_SIZE) {
         this.showFirstChunk();
       }
+
+      debug("Finalized rendering thread");
+
+      this.saveSession();
 
       if (callback) {
         callback();

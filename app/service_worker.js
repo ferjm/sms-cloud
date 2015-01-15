@@ -37,15 +37,14 @@ worker.onfetch = function(e) {
 
   var url = e.request.url;
 
-  if (url.indexOf('?') != -1) {
-    url = url.split('?')[0];
-  }
-
   e.respondWith(
     sessionStore.match(url).then(function(response) {
       debug('Yay! ' + url + ' is in the session store ' + response);
       return response;
     }).catch(function() {
+      if (url.indexOf('?') != -1) {
+        url = url.split('?')[0];
+      }
       debug(e.request.url + ' is not in the session store. Trying cache.');
       return caches.match(url).then(function(response) {
         return response;
