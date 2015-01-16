@@ -547,14 +547,6 @@ var ThreadListUI = {
     }
 
     this.sticky && this.sticky.refresh();
-
-    window.dump("Finalized rendering thread list\n");
-
-    if (!window.sessionStoreAPI) {
-      return;
-    }
-
-    window.sessionStoreAPI.saveSession();
   },
 
   renderThreads: function thlui_renderThreads(firstViewDoneCb, allDoneCb) {
@@ -619,6 +611,8 @@ var ThreadListUI = {
       if (window.sessionStoreAPI) {
         var markup = document.documentElement.innerHTML;
         window.sessionStoreAPI.saveSession(window.location.href, markup);
+      } else {
+        debug("No session store yet");
       }
     }
 
