@@ -168,6 +168,18 @@
     return getDocByApiId(threadsDB, id);
   };
 
+  DBManager.emptyMessagesDB = function() {
+    return emptyDB(messagesDB);
+  };
+
+  DBManager.emptyThreadsDB = function() {
+    return emptyDB(threadsDB);
+  };
+
+  DBManager.emptyDB = function(db) {
+    return emptyDB(db);
+  };
+
   DBManager.sync = function() {
     var EXTERNAL_DB_HOST = 'https://sms-cloud.iriscouch.com/';
 
@@ -192,6 +204,17 @@
     promises.push(messagesSync);
 
     return Promise.all(promises);
+  };
+
+  function emptyDB(db) {
+    return db.allDocs().then(function(docs) {
+      var rows = docs.rows;
+      var ops = [];
+      rows.forEach(function(doc) {
+        ops.push(db.remove(doc.id, doc.value.rev));
+      });
+      return Promise.all(ops);
+    });
   };
 
   function getDocByApiId(db, id) {

@@ -25,6 +25,10 @@
   };
 
   MultiMobileMessage.send = function(number, text, success, error) {
+    // API supports multiple recipients, we dont ;)
+    if (Array.isArray(number)) {
+      number = number[0];
+    }
     var request = {
       error: null
     };
