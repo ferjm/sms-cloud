@@ -57,30 +57,32 @@ worker.onfetch = function(e) {
 
   e.respondWith(
     sessionStore.match(url).then(function(response) {
-      debug('Yay! ' + url + ' is in the session store ' + response);
-      var cloned = response.clone();
-      cloned.text().then(function(e) {
-        debug(' RESPONSE from session store' + e);
-      });
-      return response;
-    }).catch(function() {
+      if (response) {
+        debug('Yay! ' + url + ' is in the session store ' + response);
+        var cloned = response.clone();
+        cloned.text().then(function(e) {
+          debug(' RESPONSE from session store' + e);
+        });
+        return response;
+      }
+
       if (url.indexOf('?') != -1) {
         url = url.split('?')[0];
       }
       debug(e.request.url + ' is not in the session store. Trying cache.');
 
-      return caches.open('sms-cloud-cache-v0');
-    }).then(function(cache) {
-      return cache.match(url);
-    }).then(function(response) {
-      if (!response) {
-        debug(e.request.url + ' is not even in the cache. Trying network');
-        // fetch(e.reponse) never resolve.
-        // e.default() crashes the browser
-        // me -> :_(
-        return Promise.resolve();
-      }
-      return response;
+      return caches.open('sms-cloud-cache-v0').then(function(cache) {
+        return cache.match(url);
+      }).then(function(response) {
+        if (!response) {
+          debug(e.request.url + ' is not even in the cache. Trying network');
+          // fetch(e.reponse) never resolve.
+          // e.default() crashes the browser
+          // me -> :_(
+          return Promise.resolve();
+        }
+        return response;
+      });
     })
   )
 };
