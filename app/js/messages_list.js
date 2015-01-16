@@ -1111,7 +1111,7 @@ var ThreadUI = {
       if (Compose.size > Settings.mmsSizeLimitation) {
         this.showMaxLengthNotice({
           l10nId: 'multimedia-message-exceeded-max-length',
-          l10nArgs: { 
+          l10nArgs: {
             mmsSize: (Settings.mmsSizeLimitation / 1024).toFixed(0)
           }
         });
@@ -1333,12 +1333,32 @@ var ThreadUI = {
       debug("Creating session store for this window");
       window.sessionStoreAPI = new SessionStoreAPI();
     }
+    // This is an awful hack to avoid rendering the sms threads if we already
+    // have the DOM ready because we are consuming a stored session.
+    var session = document.getElementById("session");
+    if (!session) {
+      session = document.createElement("p");
+      session.id = "session";
+      document.body.appendChild(session);
+    }
+    session.dataset.session = Date.now();
+
+    debug("SAVING SESSION for " + window.location.href);
+
     window.sessionStoreAPI.saveSession(window.location.href,
                                        document.documentElement.innerHTML);
   },
 
   // Method for rendering the list of messages using infinite scroll
   renderMessages: function thui_renderMessages(threadId, callback) {
+    var session = document.getElementById("session");
+    if (session) {
+      debug("No need to render messages cause we are consuming a stored " +
+            "session");
+      return;
+    } else {
+      debug("NO SESSION FOUND. DOCUMENT" + document.documentElement.innerHTML + "\n\n\n");
+    }
     var onMessagesRendered = (function messagesRendered() {
       if (this.messageIndex < this.CHUNK_SIZE) {
         this.showFirstChunk();

@@ -14,16 +14,34 @@ worker.oninstall = function(e) {
   debug('oninstall');
   importScripts('/sms-cloud/app/service_worker_files.js');
 
+  // "Works" in Maple but doesn't work in Chrome...
   e.waitUntil(
     caches.open('sms-cloud-cache-v0').then(function(cache) {
       return cache.addAll(kCacheFiles);
     })
   );
+
+  /*
+  // Works in Chrome but doesn't work in Maple...
+  e.waitUntil(
+    caches.open('sms-cloud-cache-v0').then(function(cache) {
+      kCacheFiles.forEach(function(file) {
+        fetch(file).then(function (resp) {
+          debug('Caching ' + file);
+          cache.put(file, resp).then(function(e) {
+            debug('Cached ' + file);
+          }, function(e) {
+            debug('Could not cache ' + file + ' ' + e);
+          });
+        })
+      });
+    })
+  );
+  */
 };
 
 worker.onactivate = function(e) {
   debug('onactivate');
-
   try {
     importScripts('/sms-cloud/app/js/sessionstore/worker_api.js');
     sessionStore = new SessionStoreWorker();
@@ -40,18 +58,29 @@ worker.onfetch = function(e) {
   e.respondWith(
     sessionStore.match(url).then(function(response) {
       debug('Yay! ' + url + ' is in the session store ' + response);
+      var cloned = response.clone();
+      cloned.text().then(function(e) {
+        debug(' RESPONSE from session store' + e);
+      });
       return response;
     }).catch(function() {
       if (url.indexOf('?') != -1) {
         url = url.split('?')[0];
       }
       debug(e.request.url + ' is not in the session store. Trying cache.');
-      return caches.match(url).then(function(response) {
-        return response;
-      });
-    }).catch(function(error) {
-      debug(e.request.url + ' is not even in the cache. Trying network');
-      return event.default();
+
+      return caches.open('sms-cloud-cache-v0');
+    }).then(function(cache) {
+      return cache.match(url);
+    }).then(function(response) {
+      if (!response) {
+        debug(e.request.url + ' is not even in the cache. Trying network');
+        // fetch(e.reponse) never resolve.
+        // e.default() crashes the browser
+        // me -> :_(
+        return Promise.resolve();
+      }
+      return response;
     })
   )
 };

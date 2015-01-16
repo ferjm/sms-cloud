@@ -29,8 +29,8 @@ addEventListener('load', function onLoad(e) {
         //window.updateAPI = new UpdateAPI();
         //window.urlOverladingAPI = new UrlOverloadingAPI();
       } else {
-        debug('Need to reload');
-        doSoftReload();
+        //debug('Need to reload');
+        //doSoftReload();
       }
 
       debug('Registered');
