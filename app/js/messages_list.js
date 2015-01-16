@@ -1343,7 +1343,7 @@ var ThreadUI = {
     }
     session.dataset.session = Date.now();
 
-    debug("SAVING SESSION for " + window.location.href);
+    debug("SAVING SESSION for " + window.location.href + " " + document.documentElement.innerHTML);
 
     window.sessionStoreAPI.saveSession(window.location.href,
                                        document.documentElement.innerHTML);
@@ -1813,6 +1813,7 @@ var ThreadUI = {
   },
 
   handleMessageClick: function thui_handleMessageClick(evt) {
+    debug("HTML " + document.documentElement.innerHTML);
     var currentNode = evt.target;
     var elems = {};
 
