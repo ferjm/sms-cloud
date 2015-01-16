@@ -32,6 +32,11 @@ function thui_mmsAttachmentClick(target) {
   return true;
 }
 
+function thui_getThreadInnerHTML() {
+  var doc = document.getElementsByTagName('iframe')[0];
+  return doc.contentDocument.documentElement.innerHTML;
+}
+
 // reduce the Composer.getContent() into slide format used by SMIL.generate some
 // day in the future, we should make the SMIL and Compose use the same format
 function thui_generateSmilSlides(slides, content) {
@@ -1343,10 +1348,10 @@ var ThreadUI = {
     }
     session.dataset.session = Date.now();
 
-    debug("SAVING SESSION for " + window.location.href + " " + document.documentElement.innerHTML);
+    debug("SAVING SESSION for " + window.location.href + " " + thui_getThreadInnerHTML());
 
     window.sessionStoreAPI.saveSession(window.location.href,
-                                       document.documentElement.innerHTML);
+      thui_getThreadInnerHTML());
   },
 
   // Method for rendering the list of messages using infinite scroll
@@ -1357,7 +1362,7 @@ var ThreadUI = {
             "session");
       return;
     } else {
-      debug("NO SESSION FOUND. DOCUMENT" + document.documentElement.innerHTML + "\n\n\n");
+      debug("NO SESSION FOUND. DOCUMENT" + thui_getThreadInnerHTML() + "\n\n\n");
     }
     var onMessagesRendered = (function messagesRendered() {
       if (this.messageIndex < this.CHUNK_SIZE) {
@@ -1813,7 +1818,7 @@ var ThreadUI = {
   },
 
   handleMessageClick: function thui_handleMessageClick(evt) {
-    debug("HTML " + document.documentElement.innerHTML);
+    debug("HTML " + thui_getThreadInnerHTML());
     var currentNode = evt.target;
     var elems = {};
 
