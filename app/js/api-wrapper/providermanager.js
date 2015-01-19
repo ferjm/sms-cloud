@@ -55,7 +55,7 @@
   ProviderManager.start = function(name) {
     if (name && exports[name]) {
       this.provider = exports[name];
-    } else if (navigator.mozMobileMessage){
+    } else {
       this.provider = SMSProvider;
     }
   }

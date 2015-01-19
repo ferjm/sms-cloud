@@ -116,7 +116,6 @@
 
   DBManager.updateMessage = function(messageId, apiMsg) {
     return messagesDB.get(messageId).then(function(doc) {
-      debugger;
       if (!doc) {
         return Promise.reject();
       }

@@ -1,13 +1,15 @@
 (function(exports) {
 
-  var oldMobileMessage = null;
+  //var oldMobileMessage = null;
   var syncInterval = null;
 
   var MultiMobileMessage = {};
 
   MultiMobileMessage.start = function() {
     if (navigator.mozMobileMessage) {
-      oldMobileMessage = navigator.oldMobileMessage;
+      this.legacyMobileMessage = navigator.mozMobileMessage;
+    } else {
+      console.info('MultiMobileMessage :: Operating in device with no SMS');
     }
 
     ProviderManager.start();
@@ -17,7 +19,7 @@
   };
 
   MultiMobileMessage.stop = function() {
-    navigator.mozMobileMessage = oldMobileMessage;
+    navigator.mozMobileMessage = this.legacyMobileMessage;
   };
 
   MultiMobileMessage.addEventListener = function(eventName, callback) {
