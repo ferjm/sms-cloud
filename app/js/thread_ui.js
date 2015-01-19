@@ -2027,7 +2027,7 @@ var ThreadUI = {
 
   onSendClick: function thui_onSendClick() {
     var options = {
-      recipients: this.recipients,
+      recipients: this.recipients.numbers,
       content: Compose.getText()
     }
     MessageManager.sendSMS(options);
