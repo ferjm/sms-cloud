@@ -1336,20 +1336,16 @@ var ThreadUI = {
 
   saveSession: function() {
     if (!window.sessionStoreAPI) {
-      debug("Creating session store for this window");
+      debug('Creating session store for this window');
       window.sessionStoreAPI = new SessionStoreAPI();
     }
+
     // This is an awful hack to avoid rendering the sms threads if we already
     // have the DOM ready because we are consuming a stored session.
-    var session = document.getElementById("session");
-    if (!session) {
-      session = document.createElement("p");
-      session.id = "session";
-      document.body.appendChild(session);
-    }
-    session.dataset.session = Date.now();
+    localStorage.setItem('session', Date.now());
 
-    debug("SAVING SESSION for " + window.location.href + " " + thui_getThreadInnerHTML());
+    debug('SAVING SESSION for ' + window.location.href + ' ' +
+          thui_getThreadInnerHTML());
 
     window.sessionStoreAPI.saveSession(window.location.href,
       thui_getThreadInnerHTML());
@@ -1357,20 +1353,20 @@ var ThreadUI = {
 
   // Method for rendering the list of messages using infinite scroll
   renderMessages: function thui_renderMessages(threadId, callback) {
-    var session = document.getElementById("session");
+    var session = localStorage.getItem('session');
     if (session) {
-      debug("No need to render messages cause we are consuming a stored " +
-            "session");
+      debug('No need to render messages cause we are consuming a stored ' +
+            'session');
       return;
     } else {
-      debug("NO SESSION FOUND. DOCUMENT" + thui_getThreadInnerHTML() + "\n\n\n");
+      debug('NO SESSION FOUND. DOCUMENT' + thui_getThreadInnerHTML() + '\n\n\n');
     }
     var onMessagesRendered = (function messagesRendered() {
       if (this.messageIndex < this.CHUNK_SIZE) {
         this.showFirstChunk();
       }
 
-      debug("Finalized rendering thread");
+      debug('Finalized rendering thread');
 
       this.saveSession();
 
