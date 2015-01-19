@@ -101,7 +101,7 @@ var ThreadUI = {
       'edit-header', 'check-uncheck-all-button', 'contact-pick-button',
       'send-button', 'delete-button', 'call-number-button', 'options-button',
       'new-message-notice', 'edit-mode', 'edit-form', 'header-text',
-      'max-length-notice', 'convert-notice', 'resize-notice',
+      'max-length-notice', 'convert-notice', 'resize-notice', 'back-button',
       'new-message-notice', 'subject-max-length-notice', 'sms-counter-notice',
       'recipient-suggestions'
     ].forEach(function(id) {
@@ -128,6 +128,10 @@ var ThreadUI = {
 
     this.toField.addEventListener(
       'focus', this.toFieldInput.bind(this), true
+    );
+
+    this.backButton.addEventListener(
+      'click', this.onHeaderAction.bind(this), true
     );
 
     this.sendButton.addEventListener(
@@ -869,7 +873,7 @@ var ThreadUI = {
     // Scroll to bottom
     this.scrollViewToBottom();
     // Make sure the caret in the "Compose" area is visible
-    Compose.scrollMessageContent();
+    // Compose.scrollMessageContent();
   },
 
   // Create a recipient from contacts activity.

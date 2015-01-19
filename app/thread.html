@@ -13,6 +13,7 @@
     <link rel="stylesheet" type="text/css" href="shared/style/buttons.css">
     <link rel="stylesheet" type="text/css" href="shared/style/input_areas.css">
     <link rel="stylesheet" type="text/css" href="shared/style/lists.css">
+    <link rel="stylesheet" type="text/css" href="shared/style/headers.css">
     <link rel="stylesheet" type="text/css" href="shared/elements/gaia-icons/gaia-icons.css">
     <!-- App styles -->
     <link rel="stylesheet" type="text/css" href="style/common.css">
@@ -25,7 +26,7 @@
     <link rel="stylesheet" type="text/css" href="style/composer.css">
     <!-- Localization -->
     <meta content="en-US" name="default_locale"><meta content="ar, en-US, fr, zh-TW" name="locales"><link rel="localization" href="locales-obj/{locale}.json">
-    
+
     <!-- API wrapper -->
     <script defer="" src="js/api-wrapper/pouchdb.js"></script>
     <script defer="" src="js/api-wrapper/dbmanager.js"></script>
@@ -42,9 +43,8 @@
     <!-- Web Components -->
     <script defer="" src="shared/elements/config.js"></script>
     <link rel="stylesheet" type="text/css" href="shared/elements/gaia-theme/gaia-theme.css">
-    <script async="" src="shared/elements/gaia-header/dist/gaia-header.js"></script>
-    
-    
+
+
 
     <!-- Shared code -->
     <script defer="" src="shared/js/l10n.js"></script>
@@ -79,11 +79,14 @@
 
   <body role="application" class="skin-comms theme-communications">
     <section id="thread-messages" class="panel editable-select-mode" role="region" aria-hidden="true">
-      <gaia-header id="messages-header" class="view-header regular-header" action="back">
-        <h1 id="messages-header-text" aria-hidden="true"></h1>
-        <button id="messages-call-number-button" data-icon="call" class="hide"></button>
-        <button id="messages-options-button" data-icon="more"></button>
-      </gaia-header>
+      <section role="region">
+        <header id='messages-header'>
+          <button id="messages-back-button" class="icon-back" id="messages-options-button" data-icon="back"></button>
+          <button id="messages-call-number-button" data-icon="call" class="hide"></button>
+          <button class="hide" id="messages-options-button" data-icon="more"></button>
+          <h1 id="messages-header-text" aria-hidden="true"></h1>
+        </header>
+      </section>
       <div id="messages-subheader" class="subheader">
         <section id="messages-to-field">
           <section data-l10n-id="to" id="to-label">To:</section>

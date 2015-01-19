@@ -5,10 +5,10 @@
 'use strict';
 
 var loaded = function() {
+  MessageManager.init();
   var id = document.location.search.replace('?id=', '');
   if (id) {
-    var thread = JSON.parse('{"id":1,"participants":["1977"],"lastMessageType":"sms","body":"Alo, how are you today, my friend? :)","timestamp":1420562306348,"unreadCount":0}');
-    loadThread(thread);
+    loadThread(id);
   }
 
   document.querySelector('.view-header').onclick = function() {
@@ -23,19 +23,29 @@ try {
     // console.debug('Changing url to ', document.location.href + '?id=' + message.data);
     // document.location = document.location.href + '?id=' + message.data;
     var thread = JSON.parse(message.data);
-    loadThread(thread);
+    loadThread(thread.id);
   });
 } catch (e) {
   console.log('BroadcastChannel not available', e);
 }
 
 
-function loadThread(thread) {
-  var iframe = document.getElementById('thread_content');
-  iframe.src = 'thread_content.html?id=' + thread.id;
-  MessageManager.init();
+function loadThread(id) {
+  var thread;
   ThreadUI.init();
-  ThreadUI.updateHeaderData(thread);
+  var iframe = document.getElementById('thread_content');
+  iframe.src = 'thread_content.html?id=' + id;
+  var options = {
+    each: function(record) {
+      if (record.id == id) {
+        thread = record;
+      }
+    },
+    done: function() {
+      ThreadUI.updateHeaderData(thread);
+    }
+  };
+  MessageManager.getThreads(options);
 }
 
 window.addEventListener('load', loaded);
