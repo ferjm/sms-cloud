@@ -34,6 +34,9 @@ function thui_mmsAttachmentClick(target) {
 
 function thui_getThreadInnerHTML() {
   var doc = document.getElementsByTagName('iframe')[0];
+  if (!doc) {
+    return;
+  }
   return doc.contentDocument.documentElement.innerHTML;
 }
 
