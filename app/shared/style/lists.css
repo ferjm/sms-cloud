@@ -244,3 +244,25 @@ html[dir="rtl"] [data-type="list"] aside.pack-end {
   float: left;
 }
 
+@media (min-width: 768px) {
+
+  #threads-container[data-type="list"] li,
+  #threads-container[data-type="list"] li:last-child {
+    width: 45%;
+    height: 10rem;
+    border: 1px solid #aaa;
+    float: left;
+    margin-left: 2%;
+  }
+
+  #threads-container[data-type="list"] li > a aside.icon {
+    background-image: url(/style/images/default-no-profile-pic.png);
+    float: left;
+    width: 10rem;
+    height: 9.8rem;
+    display: block;
+    visibility: visible;
+    margin-right: 2rem;
+  }
+}
+
