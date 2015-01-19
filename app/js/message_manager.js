@@ -42,7 +42,7 @@ var MessageManager = {
   },
 
   onMessageSending: function mm_onMessageSending(e) {
-    Threads.registerMessage(e.message);
+    // Threads.registerMessage(e.message);
 
     this.emit('message-sending', { message: e.message });
   },

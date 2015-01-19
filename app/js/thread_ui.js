@@ -778,9 +778,10 @@ var ThreadUI = {
   // is detected
   onMessage: function onMessage(message) {
     // Update the stored thread data
-    Threads.set(message.threadId, Thread.create(message));
+    // Threads.set(message.threadId, Thread.create(message));
 
-    this.appendMessage(message);
+    var iframe = document.getElementsByTagName('iframe')[0];
+    iframe.contentWindow.postMessage(JSON.stringify(message), '*');
     TimeHeaders.updateAll('header[data-time-update]');
   },
 
@@ -813,15 +814,7 @@ var ThreadUI = {
 
   onMessageSending: function thui_onMessageReceived(e) {
     var message = e.message;
-    if (this.isCurrentThread(message.threadId)) {
-      this.onMessage(message);
-      this.forceScrollViewToBottom();
-    } else {
-      if (this.shouldChangePanelNextEvent) {
-        Navigation.toPanel('thread', { id: message.threadId });
-        this.shouldChangePanelNextEvent = false;
-      }
-    }
+    this.onMessage(message);
   },
 
   onNewMessageNoticeClick: function thui_onNewMessageNoticeClick(event) {

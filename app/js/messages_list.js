@@ -149,6 +149,12 @@ var ThreadUI = {
 
     this.initRecipients();
 
+    window.addEventListener('message', function(message) {
+      var sms = JSON.parse(message.data);
+      this.appendMessage(sms);
+      this.forceScrollViewToBottom();
+    }.bind(this));
+
     // Compose.init('messages-compose-form');
 
     // // In case of input, we have to resize the input following UX Specs.
@@ -913,11 +919,7 @@ var ThreadUI = {
   },
 
   scrollViewToBottom: function thui_scrollViewToBottom() {
-    if (!this.isScrolledManually &&
-        this.container.lastElementChild &&
-        Navigation.isCurrentPanel('thread')) {
-      this.container.lastElementChild.scrollIntoView(false);
-    }
+    this.container.lastElementChild.scrollIntoView(false);
   },
 
   forceScrollViewToBottom: function thui_forceScrollViewToBottom() {
