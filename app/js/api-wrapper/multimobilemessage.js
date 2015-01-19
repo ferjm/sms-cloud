@@ -14,6 +14,8 @@
 
     ProviderManager.start();
     EventManager.reset();
+    EventManager.addEventListener('messagesSync',
+     this.performStaleOperations.bind(this));
 
     navigator.mozMobileMessage = this;
   };
@@ -139,7 +141,6 @@
     DBManager.getMessageById(id).then(function(message) {
       DBManager.getThreadById(message.id).then(function(thread) {
         if (message.deliveryStatus === 'pending') {
-          console.log('Marking as read a pending message', message);
           return request.onsuccess.call(request);
         }
       });
@@ -195,7 +196,29 @@
 
   MultiMobileMessage.stopSync = function() {
     clearInterval(syncInterval);
-  }
+  };
+
+  MultiMobileMessage.performStaleOperations = function() {
+    return DBManager.getPendingMessages().then(function(messages) {
+      if (!Array.isArray(messages) || messages.length === 0) {
+        return Promise.resolve();
+      }
+
+      var promises = [];
+      messages.forEach(function(message) {
+        var request = {};
+        request.localMessage = message;
+        promises.push(ProviderManager.send(request,
+           message.receiver[0], message.body));
+      });
+
+      Promise.all(promises).then(function() {
+        // Trigger refresh everything
+        EventManager.EventManager.onThreadsSync();
+        EventManager.EventManager.onMessagesSync();
+      });
+    });
+  };
 
   exports.MultiMobileMessage = MultiMobileMessage;
 })(window);

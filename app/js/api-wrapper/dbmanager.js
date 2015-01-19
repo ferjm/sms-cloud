@@ -205,6 +205,18 @@
     return Promise.all(promises);
   };
 
+  DBManager.getPendingMessages = function() {
+    return messagesDB.query(function(doc, emit) {
+      if (doc.deliveryStatus === 'pending') {
+        emit(doc);
+      }
+    }).then(function(result) {
+      return result.rows.map(function(entry) {
+        return entry.key;
+      });
+    });
+  };
+
   function emptyDB(db) {
     return db.allDocs().then(function(docs) {
       var rows = docs.rows;
