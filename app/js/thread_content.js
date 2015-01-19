@@ -5,11 +5,12 @@
 'use strict';
 
 var loaded = function() {
+  debug("THREADCONTENTLOADED" + document.documentElement.innerHTML);
   MessageManager.init();
   ThreadUI.init();
   var id = document.location.search.replace('?id=', '');
   if (id) {
-    console.debug('LOADING ', id);
+    debug('LOADING ', id);
     window.setTimeout(function() {
       ThreadUI.renderMessages(parseInt(id));
     }, 100);

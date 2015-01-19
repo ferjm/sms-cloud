@@ -6,4 +6,5 @@ protocol PSession
     RemoveSession(url);
 
   window:
+    sessionSaved(url);
 };

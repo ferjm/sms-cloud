@@ -150,7 +150,7 @@ var ThreadUI = {
     this.initRecipients();
 
     window.addEventListener('message', function(message) {
-      var sms = JSON.parse(message.data);
+      var sms = message.data;
       this.appendMessage(sms);
       this.forceScrollViewToBottom();
     }.bind(this));
@@ -439,7 +439,10 @@ var ThreadUI = {
 
     var prevPanel = args.meta.prev && args.meta.prev.panel;
 
-    if (prevPanel !== 'group-view' && prevPanel !== 'report-view') {
+    this.session = localStorage.getItem('session');
+    if (prevPanel !== 'group-view' &&
+        prevPanel !== 'report-view' &&
+        !session) {
       this.initializeRendering();
     }
 
@@ -919,6 +922,9 @@ var ThreadUI = {
   },
 
   scrollViewToBottom: function thui_scrollViewToBottom() {
+    if (!this.container.lastElementChild) {
+      return;
+    }
     this.container.lastElementChild.scrollIntoView(false);
   },
 
@@ -1340,12 +1346,7 @@ var ThreadUI = {
       window.sessionStoreAPI = new SessionStoreAPI();
     }
 
-    // This is an awful hack to avoid rendering the sms threads if we already
-    // have the DOM ready because we are consuming a stored session.
-    localStorage.setItem('session', Date.now());
-
-    debug('SAVING SESSION for ' + window.location.href + ' ' +
-          thui_getThreadInnerHTML());
+    debug('SAVING SESSION for ' + window.location.href);
 
     window.sessionStoreAPI.saveSession(window.location.href,
       thui_getThreadInnerHTML());
@@ -1353,14 +1354,6 @@ var ThreadUI = {
 
   // Method for rendering the list of messages using infinite scroll
   renderMessages: function thui_renderMessages(threadId, callback) {
-    var session = localStorage.getItem('session');
-    if (session) {
-      debug('No need to render messages cause we are consuming a stored ' +
-            'session');
-      return;
-    } else {
-      debug('NO SESSION FOUND. DOCUMENT' + thui_getThreadInnerHTML() + '\n\n\n');
-    }
     var onMessagesRendered = (function messagesRendered() {
       if (this.messageIndex < this.CHUNK_SIZE) {
         this.showFirstChunk();
@@ -1391,6 +1384,18 @@ var ThreadUI = {
     if (this._stopRenderingNextStep) {
       // we were already asked to stop rendering, before even starting
       return;
+    }
+
+    var session = localStorage.getItem('session');
+    if (session) {
+      debug('No need to render messages cause we are consuming a stored ' +
+            'session' + thui_getThreadInnerHTML());
+
+      var elements = ThreadUI.container.getElementsByClassName('hidden');
+      callback && callback();
+      return;
+    } else {
+      //debug('NO SESSION FOUND. DOCUMENT' + thui_getThreadInnerHTML() + '\n\n\n');
     }
 
     var filter = { threadId: threadId };

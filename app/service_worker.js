@@ -5,8 +5,8 @@ importScripts('/sms-cloud/app/js/sw-utils.js');
 var worker = new ServiceWorker();
 var sessionStore = {
   match: function(url) {
-    debug('Looking in FAKE sessionStore. Reject by default');
-    return Promise.reject();
+    debug('Looking in FAKE sessionStore. Resolve empty by default');
+    return Promise.resolve(undefined);
   }
 };
 
@@ -51,7 +51,7 @@ worker.onactivate = function(e) {
 };
 
 worker.onfetch = function(e) {
-  debug (e.type + ': ' + e.request.url);
+  // debug (e.type + ': ' + e.request.url);
 
   var url = e.request.url;
 
@@ -69,13 +69,13 @@ worker.onfetch = function(e) {
       if (url.indexOf('?') != -1) {
         url = url.split('?')[0];
       }
-      debug(e.request.url + ' is not in the session store. Trying cache.');
+      // debug(e.request.url + ' is not in the session store. Trying cache.');
 
       return caches.open('sms-cloud-cache-v0').then(function(cache) {
         return cache.match(url);
       }).then(function(response) {
         if (!response) {
-          debug(e.request.url + ' is not even in the cache. Trying network');
+          // debug(e.request.url + ' is not even in the cache. Trying network');
           // fetch(e.reponse) never resolve.
           // e.default() crashes the browser
           // me -> :_(
