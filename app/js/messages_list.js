@@ -36,6 +36,19 @@ function thui_getThreadInnerHTML() {
   return document.documentElement.innerHTML;
 }
 
+function thui_getSessionStoreContent() {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function() {
+    debug('XHR status ' + xhr.status);
+    if (xhr.status == 200) {
+      debug('SESSION STORE RESULT FOR ' + window.location.href + ' ' +
+            xhr.responseText);
+    }
+  };
+  xhr.open('GET', window.location.href, true);
+  xhr.send();
+}
+
 // reduce the Composer.getContent() into slide format used by SMIL.generate some
 // day in the future, we should make the SMIL and Compose use the same format
 function thui_generateSmilSlides(slides, content) {
@@ -1820,7 +1833,7 @@ var ThreadUI = {
   },
 
   handleMessageClick: function thui_handleMessageClick(evt) {
-    debug("HTML " + thui_getThreadInnerHTML());
+    thui_getSessionStoreContent();
     var currentNode = evt.target;
     var elems = {};
 

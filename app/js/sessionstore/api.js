@@ -22,4 +22,5 @@ SessionStoreAPI.prototype.onSessionSaved = function(resolve, reject, args) {
   // This is an awful hack to avoid rendering the sms threads if we already
   // have the DOM ready because we are consuming a stored session.
   localStorage.setItem('session', args.url);
+  resolve();
 };

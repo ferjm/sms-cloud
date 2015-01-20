@@ -5,7 +5,8 @@
 'use strict';
 
 var loaded = function() {
-  debug("THREADCONTENTLOADED" + document.documentElement.innerHTML);
+  debug("THREAD CONTENT LOADED - MESSAGES CONTAINER\n" +
+        document.getElementById('messages-container').innerHTML);
   MessageManager.init();
   ThreadUI.init();
   var id = document.location.search.replace('?id=', '');
