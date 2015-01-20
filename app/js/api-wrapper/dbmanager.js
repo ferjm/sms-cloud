@@ -180,7 +180,7 @@
   };
 
   DBManager.sync = function() {
-    var EXTERNAL_DB_HOST = 'https://sms-cloud.iriscouch.com/';
+    var EXTERNAL_DB_HOST = 'http://192.3.161.42:9999';
 
     var promises = [];
     var threadsSync = new Promise(function(resolve, reject) {
