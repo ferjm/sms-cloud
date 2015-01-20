@@ -1,5 +1,5 @@
 PROFILE_DIR=/tmp/maple_profile_dir
-MAPLE_DIR=/mozilla/maple.old/obj-firefox/dist/Nightly.app/Contents/MacOS
+MAPLE_DIR=/mozilla/maple/obj-firefox/dist/Nightly.app/Contents/MacOS
 APP=http://localhost:8000/sms-cloud/app/list.html
 
 run:
