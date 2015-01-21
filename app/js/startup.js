@@ -109,6 +109,10 @@ var Startup = {
     });
 
     var loaded = function() {
+      var isUpdated = localStorage.getItem('isUpdated');
+      if (isUpdated) {
+        document.getElementsByTagName('header')[0].classList.add('updated');
+      }
       window.removeEventListener('DOMContentLoaded', loaded);
       addPrerender();
 

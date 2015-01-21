@@ -456,13 +456,13 @@ var ThreadListUI = {
     var params = {
       header: 'Addons found',
       items: [{
-        name: 'addon-1',
+        name: 'Addon 1',
         method: this.applyAddon.bind(this)
       },{
-        name: 'addon-2',
+        name: 'Addon 2',
         method: this.applyAddon.bind(this)
       },{
-        name: 'addon-3',
+        name: 'Addon 3',
         method: this.applyAddon.bind(this)
       },{ // Last item is the Cancel button
         l10nId: 'cancel',
@@ -477,11 +477,16 @@ var ThreadListUI = {
 
   },
 
+  applyUpdate: function thlui_applyUpdate() {
+    localStorage.setItem('isUpdated', true);
+    window.location.reload();
+  },
+
   searchUpdates: function thlUi_searchUpdates() {
     var options = {
       title: { raw: 'New update found' },
       body: {
-        raw: 'Do you want to apply it?',
+        raw: 'Do you want to apply it?'
       },
       options: {
         // Cancel is a mandatory option. You need to define at least the text.
@@ -490,9 +495,7 @@ var ThreadListUI = {
         },
         confirm: {
           text: 'apply',
-          method: function(params) {
-            fooFunction(params);
-          }
+          method: this.applyUpdate.bind(this)
         }
       }
     };
