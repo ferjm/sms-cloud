@@ -438,6 +438,9 @@ var ThreadListUI = {
   showOptions: function thlui_options() {
     var params = {
       items: [{
+        l10nId: 'fxa',
+        method: Accounts.signIn
+      }, {
         l10nId: 'search-addons',
         method: MockUpdates.searchAddons
       },{
@@ -451,7 +454,7 @@ var ThreadListUI = {
 
     new OptionMenu(params).show();
   },
-
+  
   startEdit: function thlui_edit() {
     function editModeSetup() {
       /*jshint validthis:true */

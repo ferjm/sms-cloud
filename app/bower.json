@@ -1,0 +1,15 @@
+{
+  "name": "sms-cloud",
+  "version": "0.0.1",
+  "homepage": "https://github.com/ferjm/sms-cloud",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "fxa-relier-client": "https://github.com/mozilla/fxa-relier-client.git"
+  }
+}
