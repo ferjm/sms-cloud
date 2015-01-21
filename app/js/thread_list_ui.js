@@ -456,7 +456,7 @@ var ThreadListUI = {
     var params = {
       header: 'Addons found',
       items: [{
-        name: 'Addon 1',
+        name: 'New super cool thread view',
         method: this.applyAddon.bind(this)
       },{
         name: 'Addon 2',
@@ -474,7 +474,7 @@ var ThreadListUI = {
   },
 
   applyAddon: function thlui_applyAddon() {
-
+    localStorage.setItem('addonApplied', true);
   },
 
   applyUpdate: function thlui_applyUpdate() {
