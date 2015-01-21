@@ -190,7 +190,7 @@
     // Don't use live long polling sync, since sms wont trigger the events
     // needed to display
     clearInterval(syncInterval);
-    syncInterval = setInterval(DBManager.sync, 30000);
+    syncInterval = setInterval(DBManager.sync, 10000);
     DBManager.sync();
   };
 
@@ -214,8 +214,8 @@
 
       Promise.all(promises).then(function() {
         // Trigger refresh everything
-        EventManager.EventManager.onThreadsSync();
-        EventManager.EventManager.onMessagesSync();
+        EventManager.onThreadsSync();
+        EventManager.onMessagesSync();
       });
     });
   };
