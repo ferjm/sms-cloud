@@ -439,10 +439,10 @@ var ThreadListUI = {
     var params = {
       items: [{
         l10nId: 'search-addons',
-        method: this.searchAddons.bind(this)
+        method: MockUpdates.searchAddons
       },{
         l10nId: 'search-updates',
-        method: this.searchUpdates.bind(this)
+        method: MockUpdates.searchUpdates
       },{ // Last item is the Cancel button
         l10nId: 'cancel',
         incomplete: true
@@ -450,56 +450,6 @@ var ThreadListUI = {
     };
 
     new OptionMenu(params).show();
-  },
-
-  searchAddons: function thlUi_searchAddons() {
-    var params = {
-      header: 'Addons found',
-      items: [{
-        name: 'New super cool thread view',
-        method: this.applyAddon.bind(this)
-      },{
-        name: 'Addon 2',
-        method: this.applyAddon.bind(this)
-      },{
-        name: 'Addon 3',
-        method: this.applyAddon.bind(this)
-      },{ // Last item is the Cancel button
-        l10nId: 'cancel',
-        incomplete: true
-      }]
-    };
-
-    new OptionMenu(params).show();
-  },
-
-  applyAddon: function thlui_applyAddon() {
-    localStorage.setItem('addonApplied', true);
-  },
-
-  applyUpdate: function thlui_applyUpdate() {
-    localStorage.setItem('isUpdated', true);
-    window.location.reload();
-  },
-
-  searchUpdates: function thlUi_searchUpdates() {
-    var options = {
-      title: { raw: 'New update found' },
-      body: {
-        raw: 'Do you want to apply it?'
-      },
-      options: {
-        // Cancel is a mandatory option. You need to define at least the text.
-        cancel: {
-          text: 'cancel'
-        },
-        confirm: {
-          text: 'apply',
-          method: this.applyUpdate.bind(this)
-        }
-      }
-    };
-    new Dialog(options).show();
   },
 
   startEdit: function thlui_edit() {

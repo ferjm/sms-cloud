@@ -51,11 +51,4 @@ function loadThread(id) {
   MessageManager.getThreads(options);
 }
 
-window.addEventListener('DOMContentLoaded', function() {
-  var isUpdated = localStorage.getItem('isUpdated');
-  if (isUpdated) {
-    document.getElementsByTagName('header')[0].classList.add('updated');
-  }
-});
-
 window.addEventListener('load', loaded);
