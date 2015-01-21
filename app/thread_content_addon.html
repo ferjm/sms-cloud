@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="theme-color" content="#00b7b7">
+    <title>Messages</title>
+    <!--App Style root.css-->
+    <link rel="stylesheet" type="text/css" href="style/root.css">
+    <!-- Stable Building blocks -->
+    <link rel="stylesheet" type="text/css" href="shared/style/action_menu.css">
+    <link rel="stylesheet" type="text/css" href="shared/style/option_menu.css">
+    <link rel="stylesheet" type="text/css" href="shared/style/buttons.css">
+    <link rel="stylesheet" type="text/css" href="shared/style/input_areas.css">
+    <link rel="stylesheet" type="text/css" href="shared/style/lists.css">
+    <link rel="stylesheet" type="text/css" href="shared/elements/gaia-icons/gaia-icons.css">
+    <!-- App styles -->
+    <link rel="stylesheet" type="text/css" href="style/common.css">
+    <link rel="stylesheet" type="text/css" href="style/sms.css">
+    <link rel="stylesheet" type="text/css" href="style/message.css">
+    <link rel="stylesheet" type="text/css" href="style/notification.css">
+    <link rel="stylesheet" type="text/css" href="style/report_view.css">
+    <link rel="stylesheet" type="text/css" href="style/attachment.css">
+    <link rel="stylesheet" type="text/css" href="style/composer.css">
+    <!-- Localization -->
+    <link rel="manifest" href="manifest.webapp">
+    <link rel="localization" href="locales/sms.{locale}.properties">
+    <link rel="localization" href="shared/locales/date/date.{locale}.properties">
+
+    <!-- API wrapper -->
+    <script defer="" src="js/api-wrapper/pouchdb.js"></script>
+    <script defer="" src="js/api-wrapper/dbmanager.js"></script>
+    <script defer="" src="js/api-wrapper/eventmanager.js"></script>
+    <script defer="" src="js/api-wrapper/providermanager.js"></script>
+    <script defer="" src="js/api-wrapper/multimobilemessage.js"></script>
+
+    <!-- Firefox Desktop shims -->
+    <script defer src="js/desktop-only/navigator_moz_icc_manager.js"></script>
+    <script defer src="js/desktop-only/navigator_moz_settings.js"></script>
+    <script defer src="js/desktop-only/navigator_moz_mobilemessage.js"></script>
+    <script defer src="js/desktop-only/navigator_moz_contacts.js"></script>
+    <script defer src="js/desktop-only/async_storage.js"></script>
+    <!-- Web Components -->
+    <script defer src="shared/elements/config.js"></script>
+    <link rel="stylesheet" type="text/css" href="shared/elements/gaia-theme/gaia-theme.css" />
+    <link rel="localization" href="shared/elements/gaia_menu/locales/gaia_menu.{locale}.properties">
+    <link rel="localization" href="shared/elements/gaia_sim_picker/locales/gaia_sim_picker.{locale}.properties">
+
+    <!-- Shared code -->
+    <script defer src="shared/js/l10n.js"></script>
+    <script defer src="shared/js/l10n_date.js"></script>
+    <!-- Should be removed while gecko support navigator.mozHour12 API -->
+    <script defer src="shared/js/date_time_helper.js"></script>
+    <script defer src="shared/js/template.js"></script>
+    <script defer src="shared/js/usertiming.js"></script>
+    <script defer src="shared/js/performance_testing_helper.js"></script>
+    <script defer src="shared/js/async_storage.js"></script>
+    <script defer src="shared/js/lazy_loader.js"></script>
+    <script defer src="shared/js/sticky_header.js"></script>
+    <script defer src="js/link_helper.js"></script>
+    <script defer src="js/event_dispatcher.js"></script>
+    <script defer src="js/iac/event_dispatcher.js"></script>
+    <script defer src="js/time_headers.js"></script>
+    <script defer src="shared/js/gesture_detector.js"></script>
+    <script defer src="shared/js/option_menu.js"></script>
+    <script src="js/utils.js"></script>
+    <script defer src="js/settings.js"></script>
+    <script defer src="js/subject_composer.js"></script>
+    <script defer src="js/attachment.js"></script>
+    <script defer src="js/recipients.js"></script>
+    <script defer src="js/message_manager.js"></script>
+    <script defer src="js/messages_list.js"></script>
+    <script defer src="js/thread_content.js"></script>
+    <script defer src="js/app.js"></script>
+
+    <script defer src="js/sessionstore/api.js"></script>
+  </head>
+
+  <body role="application" class="skin-comms theme-communications">
+    <div id="messages-container" data-type="list" class="article-list addon"></div>
+
+    <!--
+      -  Templates
+      -->
+
+    <div id="contact-suggestion-tmpl" class="hide">
+      <!--
+      <li role="presentation">
+        <a class="suggestion" role="option"
+          data-number="${number}" data-source="contacts" data-name="${name}"
+          data-type="${type}" data-carrier="${carrier}">
+          ${photoHTML}
+          <p class="name"><bdi>${nameHTML}</bdi></p>
+          <p class="number">${phoneDetailsHTML}</p>
+        </a>
+      </li>
+      -->
+    </div>
+
+    <div id="contact-suggestion-unknown-tmpl" class="hide">
+    <!--
+    <li role="presentation">
+      <a class="suggestion" role="option"
+        data-number="${number}" data-source="contacts" data-name="${name}"
+        data-type="${type}" data-carrier="${carrier}">
+        ${photoHTML}
+        <p class="name">${phoneDetailsHTML}</p>
+        <p class="number">
+          <span data-l10n-id="unknown-contact-title">Unknown Contact</span>
+        </p>
+     </a>
+    </li>
+    -->
+    </div>
+
+    <div id="contact-prompt-tmpl" class="hide">
+      <!--
+      <div class="contact-header">
+        ${photoHTML}
+        <p class="name"><bdi>${name}</bdi></p>
+        <p class="details">${phoneDetailsHTML}</p>
+      </div>
+      -->
+    </div>
+
+    <div id="contact-photo-tmpl" class="hide">
+      <!--
+      <aside role="img" data-l10n-id="contact-photo" aria-label="Contact photo" class="pack-end">
+        <span class="contact-photo" data-type="img"></span>
+      </aside>
+      -->
+    </div>
+
+    <div id="contact-highlight-tmpl" class="hide">
+      <!--
+      <span class="highlight">${str}</span>
+      -->
+    </div>
+
+    <div id="messages-number-tmpl" class="hide">
+      <!--
+      <a class="suggestion" data-number="${number}" data-source="manual" data-name="${number}">
+        <p class="name"><bdi>${number}</bdi></p>
+      </a>
+      -->
+    </div>
+
+    <div id="information-report-tmpl" class="hide">
+      <!--
+      <span class="icon"></span>
+      <span data-l10n-id="${titleL10n}"></span>
+      <span class="timestamp l10n-contains-date"
+            data-l10n-date="${timestamp}"
+            data-l10n-date-format12="${messageL10nDateFormat12}"
+            data-l10n-date-format24="${messageL10nDateFormat24}"
+            >${reportDateL10n}</span>
+      -->
+    </div>
+
+    <div id="messages-not-downloaded-tmpl" class="hide">
+      <!--
+      <span class="not-downloaded-message l10n-contains-date"
+            data-l10n-id="${messageL10nId}"
+            data-l10n-args="${messageL10nArgs}"
+            data-l10n-date="${messageL10nDate}"
+            data-l10n-date-format="${messageL10nDateFormat}"></span>
+      <button type="button" class="download" data-l10n-id="${downloadL10nId}"></button>
+      -->
+    </div>
+
+     <div id="messages-date-group-tmpl">
+      <!--
+      <div id="${id}" class="messages-date-group" data-timestamp="${timestamp}">
+        <header
+          class="messages-date-group-header"
+          data-time-update="${headerTimeUpdate}"
+          data-time="${headerTime}"
+          data-date-only="${headerDateOnly}">
+        </header>
+        <ul class="message-list"></ul>
+      </div>
+      -->
+    </div>
+
+    <div id="messages-message-tmpl" class="hide">
+      <!--
+      <label class="pack-checkbox danger">
+        <input type="checkbox" value="${id}">
+        <span></span>
+      </label>
+      <section class="box">
+        <h1 class="message-subject">
+          ${subject}
+        </h1>
+        <div class="message-content">
+          <p class="message-content-body" tabindex="-1">${bodyHTML}</p>
+          <div class="message-details">
+            ${simInformationHTML}
+            <time data-time-update="true" data-time-only="true" data-time="${timestamp}"></time>
+            ${messageStatusHTML}
+          </div>
+        </div>
+      </section>
+      -->
+    </div>
+
+    <div id="messages-message-sim-information-tmpl" class="hide">
+      <!--
+      <span class="message-sim-information"
+        data-l10n-id="sim-id-label"
+        data-l10n-args="${simNumberL10nArgs}">
+      </span>
+      -->
+    </div>
+
+    <div id="messages-message-status-tmpl" class="hide">
+      <!--
+      <div class="message-status" data-l10n-id="${statusL10nId}"
+           aria-label="Message status"
+           role="status">
+      </div>
+      -->
+    </div>
+
+    <div id="messages-recipient-tmpl" class="hide">
+      <!--
+      <span class="${className}" x-inputmode="verbatim"
+        contenteditable="${editable}" role="${role}"
+        data-number="${number}" data-source="${source}" data-name="${name}"
+        data-carrier="${carrier}" data-type="${type}" dir="auto">
+        ${name}
+      </span>
+      -->
+    </div>
+
+    <div id="attachment-nopreview-tmpl" class="hide">
+      <!--
+      <div class="attachment ${errorClass}">
+        <div class="thumbnail-placeholder ${type}-placeholder">
+        </div>
+        <div class="js-size-indicator size-indicator" data-l10n-id="${sizeL10nId}" data-l10n-args="${sizeL10nArgs}"></div>
+      </div>
+      <div class="file-name">${fileName}</div>
+      -->
+    </div>
+
+    <div id="attachment-preview-tmpl" class="hide">
+      <!--
+      <div class="attachment">
+        <div class="thumbnail"></div>
+        <div class="js-size-indicator size-indicator" data-l10n-id="${sizeL10nId}" data-l10n-args="${sizeL10nArgs}"></div>
+      </div>
+      <div class="file-name">${fileName}</div>
+      -->
+    </div>
+
+    <div id="attachment-draft-tmpl" class="hide">
+      <!--
+      <head>
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+        <meta charset="utf-8">
+        <base href="${baseURL}">
+        <link rel="stylesheet" type="text/css" href="style/attachment_draft.css">
+        <link rel="stylesheet" type="text/css" href="style/attachment.css">
+      </head>
+      <body class="attachment-draft ${cssClass}">${baseHTML}</body>
+      -->
+    </div>
+
+    <!--
+      Please, don't change template markup alignment, it's done this way to
+      remove any whitespace symbols between inline elements.
+    -->
+    <div id="phone-details-tmpl" class="hide">
+      <!--
+      <span class="phone-details ${hasTypeClass} ${hasCarrierClass}"><span
+            dir="auto" class="phone-type phone-details-item"
+            data-l10n-id="${type}">${type}</span><span
+            class="phone-type-separator phone-details-item"
+            data-l10n-id="phone-type-separator"></span><span
+            class="phone-number phone-details-item" dir="ltr">${number}</span><span
+            class="phone-carrier-separator phone-details-item"
+            data-l10n-id="phone-carrier-separator"></span><span
+            class="phone-carrier phone-details-item" dir="auto">${carrier}</span>
+      </span>
+      -->
+    </div>
+
+    <div id="messages-header-tmpl" class="hide">
+      <!--
+      <bdi>${name}</bdi>
+      <bdi dir="ltr" class="thread-participant-count">
+      &nbsp;‎(+${participantCount})
+      </bdi>
+      -->
+    </div>
+  </body>
+</html>

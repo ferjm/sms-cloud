@@ -34,7 +34,10 @@ function loadThread(id) {
   var thread;
   ThreadUI.init();
   var iframe = document.getElementById('thread_content');
-  iframe.src = 'thread_content.html?id=' + id;
+  var addonApplied = localStorage.getItem('addonApplied');
+  var url = 'thread_content';
+  url += addonApplied ? '_addon.html' : '.html';
+  iframe.src = url + '?id=' + id;
   var options = {
     each: function(record) {
       if (record.id == id) {
@@ -47,5 +50,12 @@ function loadThread(id) {
   };
   MessageManager.getThreads(options);
 }
+
+window.addEventListener('DOMContentLoaded', function() {
+  var isUpdated = localStorage.getItem('isUpdated');
+  if (isUpdated) {
+    document.getElementsByTagName('header')[0].classList.add('updated');
+  }
+});
 
 window.addEventListener('load', loaded);
