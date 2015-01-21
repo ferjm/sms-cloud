@@ -628,7 +628,7 @@ var ThreadListUI = {
         onThreadsRendered.bind(self);
         allDoneCb();
       };
-      xhr.open("GET", "static/x_large_thread_view.html");
+      xhr.open("GET", "static/x_large_threads_list.html");
       xhr.responseType = "document";
       xhr.send();
     } else {
