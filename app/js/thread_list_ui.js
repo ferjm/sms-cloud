@@ -622,7 +622,25 @@ var ThreadListUI = {
       done: allDoneCb
     };
 
-    MessageManager.getThreads(renderingOptions);
+    if (localStorage.mockMode === '1') {
+      var self = this;
+      var xhr = new XMLHttpRequest();
+      xhr.onload = function() {
+        onRenderThread.bind(self);
+        var container = document.getElementById('threads-container');
+        var children = this.responseXML.body.childNodes;
+        for(var i = 0; i < children.length; i++) {
+          container.appendChild(children[i]);
+        }
+        onThreadsRendered.bind(self);
+        allDoneCb();
+      };
+      xhr.open("GET", "static/x_large_thread_view.html");
+      xhr.responseType = "document";
+      xhr.send();
+    } else {
+      MessageManager.getThreads(renderingOptions);
+    }
   },
 
   createThread: function thlui_createThread(record) {

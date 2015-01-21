@@ -189,8 +189,11 @@
   MultiMobileMessage.sync = function() {
     // Don't use live long polling sync, since sms wont trigger the events
     // needed to display
+    if (localStorage.mockMode === '1') {
+      return;
+    }
     clearInterval(syncInterval);
-    syncInterval = setInterval(DBManager.sync, 10000);
+    syncInterval = setInterval(DBManager.sync, 30000);
     DBManager.sync();
   };
 
@@ -214,8 +217,8 @@
 
       Promise.all(promises).then(function() {
         // Trigger refresh everything
-        EventManager.onThreadsSync();
-        EventManager.onMessagesSync();
+        // EventManager.onThreadsSync();
+        // EventManager.onMessagesSync();
       });
     });
   };
