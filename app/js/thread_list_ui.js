@@ -438,23 +438,16 @@ var ThreadListUI = {
   showOptions: function thlui_options() {
     var params = {
       items: [{
-        l10nId: 'settings',
-        method: function oSettings() {
-          ActivityPicker.openSettings();
-        }
+        l10nId: 'search-addons',
+        method: MockUpdates.searchAddons
+      },{
+        l10nId: 'search-updates',
+        method: MockUpdates.searchUpdates
       },{ // Last item is the Cancel button
         l10nId: 'cancel',
         incomplete: true
       }]
     };
-
-    // Add delete option when list is not empty
-    if (ThreadListUI.noMessages.classList.contains('hide')) {
-      params.items.unshift({
-        l10nId: 'selectThreads-label',
-        method: this.startEdit.bind(this)
-      });
-    }
 
     new OptionMenu(params).show();
   },
