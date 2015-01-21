@@ -1421,7 +1421,11 @@ var ThreadUI = {
       end: onMessagesRendered
     };
 
-    MessageManager.getMessages(renderingOptions);
+    if (MockContent.enabled) {
+      MockContent.getThread(onMessagesRendered);
+    } else {
+      MessageManager.getMessages(renderingOptions);
+    }
 
     // force the next scroll to bottom
     this.isScrolledManually = false;

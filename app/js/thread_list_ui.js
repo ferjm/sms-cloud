@@ -615,22 +615,8 @@ var ThreadListUI = {
       done: allDoneCb
     };
 
-    if (localStorage.mockMode === '1') {
-      var self = this;
-      var xhr = new XMLHttpRequest();
-      xhr.onload = function() {
-        onRenderThread.bind(self);
-        var container = document.getElementById('threads-container');
-        var children = this.responseXML.body.childNodes;
-        for(var i = 0; i < children.length; i++) {
-          container.appendChild(children[i]);
-        }
-        onThreadsRendered.bind(self);
-        allDoneCb();
-      };
-      xhr.open("GET", "static/x_large_threads_list.html");
-      xhr.responseType = "document";
-      xhr.send();
+    if (MockContent.enabled) {
+      MockContent.getThreads(renderingOptions);
     } else {
       MessageManager.getThreads(renderingOptions);
     }
