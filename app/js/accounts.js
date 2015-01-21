@@ -127,7 +127,7 @@
     },
 
     signIn: function() {
-      this.client.auth.signIn({
+      Accounts.client.auth.signIn({
         state: Date.now(),
         scope: 'profile',
         redirectUri: FXA_REDIRECT_URI
