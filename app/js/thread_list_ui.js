@@ -53,6 +53,12 @@ var ThreadListUI = {
       this[Utils.camelCase(id)] = document.getElementById('threads-' + id);
     }, this);
 
+    [
+      'footer', 'user-image', 'user-name'
+    ].forEach(function(id) {
+      this[Utils.camelCase(id)] = document.getElementById(id);
+    }, this);
+
     this.mainWrapper = document.getElementById('main-wrapper');
 
     // TODO this should probably move to a "WrapperView" class
@@ -109,6 +115,30 @@ var ThreadListUI = {
     EventManager.addEventListener('threadsSync', (function() {
       this.renderThreads();
     }).bind(this));
+
+    Accounts.addEventListener('login', (function(profile) {
+      this.showUserInfo(profile);
+      this.renderThreads();
+    }).bind(this));
+
+    Accounts.addEventListener('logout', (function() {
+      this.hideUserInfo();
+      this.renderThreads();
+    }).bind(this));
+  },
+
+  showUserInfo: function thlui_showUserInfo(profile) {
+    this.userName.textContent = profile.email;
+    if (profile.avatar) {
+      this.userImage.src = profile.avatar;
+    }
+    this.footer.classList.remove('hide');
+  },
+
+  hideUserInfo: function thlui_hideUserInfo() {
+    this.footer.classList.add('hide');
+    this.userImage.src = "style/images/default-no-profile-pic.png";
+    this.userName.textContent = "user@domain.org";
   },
 
   initStickyHeader: function thlui_initStickyHeader() {
@@ -436,20 +466,33 @@ var ThreadListUI = {
   },
 
   showOptions: function thlui_options() {
-    var params = {
-      items: [{
+    var items;
+
+    if (Accounts.profile) {
+      items = [{
+      l10nId: 'fxa-signout',
+      method: Accounts.signOut
+      }];
+    } else {
+      items = [{
         l10nId: 'fxa',
         method: Accounts.signIn
-      }, {
-        l10nId: 'search-addons',
-        method: MockUpdates.searchAddons
-      },{
-        l10nId: 'search-updates',
-        method: MockUpdates.searchUpdates
-      },{ // Last item is the Cancel button
-        l10nId: 'cancel',
-        incomplete: true
-      }]
+      }]; 
+    }
+
+    items = items.concat([{
+      l10nId: 'search-addons',
+      method: MockUpdates.searchAddons
+    },{
+      l10nId: 'search-updates',
+      method: MockUpdates.searchUpdates
+    },{ // Last item is the Cancel button
+      l10nId: 'cancel',
+      incomplete: true
+    }]);
+
+    var params = {
+      items: items
     };
 
     new OptionMenu(params).show();

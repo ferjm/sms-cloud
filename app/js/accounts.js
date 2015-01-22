@@ -1,7 +1,7 @@
 (function(exports) {
 
   const FXA_CLIENT_ID = '313ad9b095026ebb';
-  const FXA_REDIRECT_URI = 'https://ferjm.github.io/sms-cloud/app/list.html';
+  const FXA_REDIRECT_URI = 'http://localhost:8000/sms-cloud/app/list.html';
   const FXA_NOT_A_SECRET = '32e2b8dbaf760d87dddcbca19ee51de4f2b9e494ef0a05492c793948b2c739e6';
   const FXA_OAUTH_HOST = 'https://oauth-stable.dev.lcip.org/v1';
   const FXA_PROFILE_HOST = 'https://stable.dev.lcip.org/profile/v1';
@@ -10,6 +10,7 @@
 
   var _profile;
   var _client;
+  var _listeners = {};
 
   function _request(options) {
     return new Promise(function(resolve, reject) {
@@ -90,20 +91,14 @@
       _profile = profile;
       return profile;
     });
+  }
 
-    /*
-    return self.client.token.tradeCode(code, {
-      xhr: new XMLHttpRequest()
-    }).then(function(token) {
-      console.log('Got TOKEN ' + token);
-      return self.client.fetch(token);
-    }, function(error) {
-      console.error('TRADE TOKEN ERROR ' + error);
-    }).then(function(profile) {
-      console.log('Got FxA profile ' + profile);
-      _profile = profile;
-      return _profile;
-    });*/
+  function _triggerEvent(name, value) {
+    var handlers = _listeners[name] || [];
+
+    handlers.forEach(function(handler) {
+      handler.call(null, value);
+    });
   }
 
   var Accounts = {
@@ -122,6 +117,13 @@
       return _profile;
     },
 
+    init: function() {
+      _setProfile().then(function(profile) {
+        console.log('FXA - Logged as ' + JSON.stringify(profile));
+        _triggerEvent('login', profile);
+      });
+    },
+
     signIn: function() {
       Accounts.client.auth.signIn({
         state: Date.now(),
@@ -132,6 +134,13 @@
 
     signOut: function() {
       _profile = null;
+      _triggerEvent('logout', {});
+    },
+
+    addEventListener: function(eventName, callback) {
+      var eventListeners = _listeners[eventName] || [];
+      eventListeners.push(callback);
+      _listeners[eventName] = eventListeners;
     }
   };
 
@@ -139,7 +148,5 @@
 })(window);
 
 window.addEventListener('load', function() {
-  _setProfile().then(function(profile) {
-    console.log('FXA - Logged as ' + JSON.stringify(profile));
-  });
+  Accounts.init();
 });
