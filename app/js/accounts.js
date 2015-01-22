@@ -1,7 +1,7 @@
 (function(exports) {
 
   const FXA_CLIENT_ID = '313ad9b095026ebb';
-  const FXA_REDIRECT_URI = 'http://localhost:8000/sms-cloud/app/list.html';
+  const FXA_REDIRECT_URI = 'https://ferjm.github.io/sms-cloud/app/list.html';
   const FXA_NOT_A_SECRET = '32e2b8dbaf760d87dddcbca19ee51de4f2b9e494ef0a05492c793948b2c739e6';
   const FXA_OAUTH_HOST = 'https://oauth-stable.dev.lcip.org/v1';
   const FXA_PROFILE_HOST = 'https://stable.dev.lcip.org/profile/v1';
