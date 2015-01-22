@@ -579,6 +579,8 @@ var ThreadListUI = {
   finalizeRendering: function thlui_finalizeRendering(empty) {
     if (empty) {
       this.setEmpty(true);
+    } else {
+      this.setEmpty(false);
     }
 
     if (!empty) {
@@ -630,12 +632,16 @@ var ThreadListUI = {
       }
     }
 
-    function onThreadsRendered() {
+    function onThreadsRendered(hasMockedThreads) {
       /* jshint validthis: true */
 
       /* We set the view as empty only if there's no threads and no drafts,
        * this is done to prevent races between renering threads and drafts. */
-      this.finalizeRendering(!(hasThreads || Drafts.size));
+      if (MockContent.enabled) {
+        this.finalizeRendering(!hasMockedThreads);
+      } else {
+        this.finalizeRendering(!(hasThreads || Drafts.size));
+      }
 
       if (firstPanelCount > 0) {
         // dispatch visually-complete and content-interactive when rendering

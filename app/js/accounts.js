@@ -60,7 +60,6 @@
 
     // XXX: fxaRelierClient.token.tradeCode doesn't work :(
     //      so we need to do the requests manually.
-    console.log('Getting PROFILE ' + code);
     return _request({
       method: 'POST',
       url: FXA_OAUTH_HOST + '/token',
@@ -118,9 +117,22 @@
     },
 
     init: function() {
+      try {
+        _profile = localStorage.getItem('account');
+        _profile = JSON.parse(_profile);
+      } catch(e) {
+        console.log('CRAP ' + e);
+      }
+
+      if (_profile) {
+        _triggerEvent('login', _profile);
+        return;
+      }
+
       _setProfile().then(function(profile) {
         console.log('FXA - Logged as ' + JSON.stringify(profile));
         _triggerEvent('login', profile);
+        localStorage.setItem('account', JSON.stringify(profile));
       });
     },
 
@@ -135,6 +147,7 @@
     signOut: function() {
       _profile = null;
       _triggerEvent('logout', {});
+      localStorage.setItem('account', null);
     },
 
     addEventListener: function(eventName, callback) {

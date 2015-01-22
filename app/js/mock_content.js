@@ -25,15 +25,17 @@
   }
 
   function mockGetThreads(renderingOptions) {
-    var content = 'static/x_empty_threads_list.html';
     if (Accounts.profile && accountContent[Accounts.profile.email]) {
-      content = accountContent[Accounts.profile.email];
+      var content = accountContent[Accounts.profile.email];
+      applyMockContentToNode(content,
+       'threads-container').then(() => {
+         renderingOptions.end && renderingOptions.end(true);
+         renderingOptions.done && renderingOptions.done();
+       });
+    } else {
+      renderingOptions.end && renderingOptions.end(false);
+      renderingOptions.done && renderingOptions.done();
     }
-    applyMockContentToNode(content,
-     'threads-container').then(() => {
-       renderingOptions.end();
-       renderingOptions.done();
-     });
   }
 
   function mockGetThread(cb) {
@@ -44,6 +46,7 @@
   function applyMockContentToNode(url, id) {
     return getContent(url).then(function(body) {
       var container = document.getElementById(id);
+      container.innerHTML = '';
       var children = body.childNodes;
       for(var i = 0; i < children.length; i++) {
         container.appendChild(children[i]);
