@@ -25,7 +25,7 @@
   }
 
   function mockGetThreads(renderingOptions) {
-    var content = 'static/x_large_threads_list.html';
+    var content = 'static/x_empty_threads_list.html';
     if (Accounts.profile && accountContent[Accounts.profile.email]) {
       content = accountContent[Accounts.profile.email];
     }
