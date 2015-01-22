@@ -195,11 +195,11 @@
     });
     var messagesSync = new Promise(function(resolve, reject) {
       PouchDB.sync('messages', EXTERNAL_DB_HOST + 'messages').
-      on('complete', function() {
+      on('complete', function(result) {
         if (result.pull.docs_read || result.pull.docs_written) {
           EventManager.onMessagesSync();
-          resolve();
         }
+        resolve();
       }).
       on('error',reject);
     });
