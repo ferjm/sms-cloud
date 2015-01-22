@@ -51,7 +51,12 @@
     });
   }
 
-  function _setProfile(code) {
+  function _setProfile() {
+    var code = Utils.getQueryParameter('code');
+    if (!code && !code.length) {
+      return Promise.reject();
+    }
+
     // XXX: fxaRelierClient.token.tradeCode doesn't work :(
     //      so we need to do the requests manually.
     console.log('Getting PROFILE ' + code);
@@ -114,16 +119,7 @@
     },
 
     get profile() {
-      if (_profile) {
-        return Promise.resolve(_profile);
-      }
-
-      var code = Utils.getQueryParameter('code');
-      if (code && code.length) {
-        return _setProfile(code);
-      } else {
-        return Promise.resolve();
-      }
+      return _profile;
     },
 
     signIn: function() {
@@ -134,11 +130,16 @@
       });
     },
 
+    signOut: function() {
+      _profile = null;
+    }
   };
 
   exports.Accounts = Accounts;
 })(window);
 
 window.addEventListener('load', function() {
-  Accounts.profile;
+  _setProfile().then(function(profile) {
+    console.log('FXA - Logged as ' + JSON.stringify(profile));
+  });
 });

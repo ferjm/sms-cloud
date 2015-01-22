@@ -2,7 +2,15 @@
 
 (function(exports) {
 
+  localStorage.setItem('mockMode', '1');
+
   var enabled = localStorage.mockMode === '1';
+
+  var accountContent = {
+    'fernando@mozilla.com': 'static/x_large_threads_list_fernando.html',
+    'francisco@mozilla.com': 'static/x_large_threads_list_francisco.html',
+    'apastor@mozilla.com': 'static/x_large_threads_list_apastor.html'
+  };
 
   function getContent(url) {
     return new Promise(function(resolve, reject) {
@@ -17,7 +25,11 @@
   }
 
   function mockGetThreads(renderingOptions) {
-    applyMockContentToNode('static/x_large_threads_list.html',
+    var content = 'static/x_large_threads_list.html';
+    if (Accounts.profile && accountContent[Accounts.profile.email]) {
+      content = accountContent[Accounts.profile.email];
+    }
+    applyMockContentToNode(content,
      'threads-container').then(() => {
        renderingOptions.end();
        renderingOptions.done();
@@ -38,7 +50,6 @@
       }
     });
   }
-
 
   exports.MockContent = {
     get enabled() {
