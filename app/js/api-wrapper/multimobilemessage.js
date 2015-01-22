@@ -6,6 +6,10 @@
   var MultiMobileMessage = {};
 
   MultiMobileMessage.start = function() {
+    if (localStorage.mockMode === '1') {
+      return;
+    }
+
     if (navigator.mozMobileMessage) {
       this.legacyMobileMessage = navigator.mozMobileMessage;
     } else {

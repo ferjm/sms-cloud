@@ -10,6 +10,11 @@
 // data handled per each session so we can quickly render them when needed.
 //
 addEventListener('load', function onLoad(e) {
+  if (localStorage.mockMode === '1') {
+    debug('MOCK mode - no service worker');
+    return;
+  }
+
   var kWorkerUrl = '/sms-cloud/app/service_worker.js';
   var kWorkerOptions = {
     'scope': [ '/sms-cloud/app/' ]

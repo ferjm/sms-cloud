@@ -58,10 +58,6 @@ worker.onactivate = function(e) {
 worker.onfetch = function(e) {
   debug (e.type + ': ' + e.request.url);
 
-  if (localStorage.mockMode === '1') {
-    return;
-  }
-
   var url = e.request.url;
 
   e.respondWith(
