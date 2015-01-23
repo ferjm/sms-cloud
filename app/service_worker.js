@@ -56,14 +56,14 @@ worker.onactivate = function(e) {
 };
 
 worker.onfetch = function(e) {
-  debug (e.type + ': ' + e.request.url);
+  //debug (e.type + ': ' + e.request.url);
 
   var url = e.request.url;
 
   e.respondWith(
     sessionStore.match(url).then(function(response) {
       if (response) {
-        debug('Yay! ' + url + ' is in the session store ' + response);
+        //debug('Yay! ' + url + ' is in the session store ' + response);
         /*var cloned = response.clone();
         cloned.text().then(function(e) {
           debug(' RESPONSE from session store' + e);
@@ -80,13 +80,13 @@ worker.onfetch = function(e) {
         return cache.match(url);
       }).then(function(response) {
         if (!response) {
-          debug(e.request.url + ' is not even in the cache. Trying network');
+          //debug(e.request.url + ' is not even in the cache. Trying network');
           // fetch(e.request) never resolve.
           // e.default() crashes the browser
           // me -> :_(
           return;
         }
-        debug('CACHED response for ' + e.request.url);
+        //debug('CACHED response for ' + e.request.url);
         return response;
       }).catch(function(error) {
         debug('Error for ' + e.request.url + ' ' + error);

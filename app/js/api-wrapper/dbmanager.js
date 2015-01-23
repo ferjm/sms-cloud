@@ -1,10 +1,46 @@
 (function DBManager(exports) {
   var DBManager = {};
 
-  var messagesDB = new PouchDB('messages');
-  var threadsDB = new PouchDB('threads');
+  var dbPool = {};
+
+  var messagesDB;
+  var threadsDB;
+
+  var messagesDBName;
+  var threadsDBName;
+
+  function ensureDB() {
+    var user;
+    if (Accounts.profile && Accounts.profile.user) {
+      user = Accounts.profile.user;
+    }
+    DBManager.start(user);
+  };
+
+  DBManager.start = function(user) {
+    if (!user) {
+      user = '';
+    } else {
+      user = '_' + user;
+    }
+
+    messagesDBName = 'messages' + user;
+    threadsDBName = 'threads' + user;
+
+    if (!dbPool[user]) {
+      debug('Starting DBMANAGER for user ' + user);
+      dbPool[user] = {
+        messages: new PouchDB(messagesDBName),
+        threads: new PouchDB(threadsDBName)
+      };
+    }
+
+    messagesDB = dbPool[user].messages;
+    threadsDB = dbPool[user].threads;
+  };
 
   DBManager.new = function(number, text) {
+    ensureDB();
     return DBManager.getThread(number).then(function(thread) {
       return new Promise(function(resolve, reject) {
         if (thread) {
@@ -27,6 +63,7 @@
   };
 
   DBManager.getNextThreadId = function() {
+    ensureDB();
     return getMaxFromField(threadsDB, 'api_id').then(function(max) {
       if (max === -Infinity) {
         return 1;
@@ -36,6 +73,7 @@
   };
 
   DBManager.getThread = function(number) {
+    ensureDB();
     return threadsDB.query(function(doc, emit) {
       if (doc.participants &&
          doc.participants.length === 1 &&
@@ -48,6 +86,7 @@
   };
 
   DBManager.createThread = function(threadId, participant, text) {
+    ensureDB();
     var thread = {
       api_id: threadId,
       participants: [].concat(participant),
@@ -61,12 +100,14 @@
   };
 
   DBManager.updateThread = function(thread) {
+    ensureDB();
     return threadsDB.put(thread).then(function() {
       return thread;
     });
   };
 
   DBManager.getNextMessageId = function() {
+    ensureDB();
     return getMaxFromField(messagesDB, 'api_id').then(function(max) {
       if (max === -Infinity) {
         return 1;
@@ -76,6 +117,7 @@
   };
 
   DBManager.createMessage = function(threadId, number, text) {
+    ensureDB();
     return DBManager.getNextMessageId().then(function(id) {
       var message = {
           sender: null,
@@ -98,6 +140,7 @@
   };
 
   DBManager.updateThreadBody = function(threadId, text) {
+    ensureDB();
     return threadsDB.query(function(doc, emit) {
         if (doc.api_id === threadId) {
           emit(doc);
@@ -115,6 +158,7 @@
   };
 
   DBManager.updateMessage = function(messageId, apiMsg) {
+    ensureDB();
     return messagesDB.get(messageId).then(function(doc) {
       if (!doc) {
         return Promise.reject();
@@ -147,44 +191,55 @@
   }
 
   DBManager.destroy = function() {
+    ensureDB();
     messagesDB.destroy();
     threadsDB.destroy();
   };
 
   DBManager.getAllMessages = function() {
+    ensureDB();
     return getAllDocs(messagesDB);
   };
 
   DBManager.getAllThreads = function() {
+    ensureDB();
     return getAllDocs(threadsDB);
   };
 
   DBManager.getMessageById = function(id) {
+    ensureDB();
     return getDocByApiId(messagesDB, id);
   };
 
   DBManager.getThreadById = function(id) {
+    ensureDB();
     return getDocByApiId(threadsDB, id);
   };
 
   DBManager.emptyMessagesDB = function() {
+    ensureDB();
     return emptyDB(messagesDB);
   };
 
   DBManager.emptyThreadsDB = function() {
+    ensureDB();
     return emptyDB(threadsDB);
   };
 
   DBManager.emptyDB = function(db) {
+    ensureDB();
     return emptyDB(db);
   };
 
   DBManager.sync = function() {
+    ensureDB();
     var EXTERNAL_DB_HOST = 'https://sms-cloud.iriscouch.com/';
+
+    debug('Syncing with ' + EXTERNAL_DB_HOST + threadsDBName);
 
     var promises = [];
     var threadsSync = new Promise(function(resolve, reject) {
-      PouchDB.sync('threads', EXTERNAL_DB_HOST + 'threads').
+      PouchDB.sync(threadsDBName, EXTERNAL_DB_HOST + threadsDBName).
       on('complete', function(result) {
         if (result.pull.docs_read || result.pull.docs_written) {
           EventManager.onThreadsSync();
@@ -194,7 +249,7 @@
       on('error',reject);
     });
     var messagesSync = new Promise(function(resolve, reject) {
-      PouchDB.sync('messages', EXTERNAL_DB_HOST + 'messages').
+      PouchDB.sync(messagesDBName, EXTERNAL_DB_HOST + messagesDBName).
       on('complete', function(result) {
         if (result.pull.docs_read || result.pull.docs_written) {
           EventManager.onMessagesSync();
@@ -211,6 +266,7 @@
   };
 
   DBManager.getPendingMessages = function() {
+    ensureDB();
     return messagesDB.query(function(doc, emit) {
       if (doc.deliveryStatus === 'pending') {
         emit(doc);
@@ -257,4 +313,14 @@
   }
 
   exports.DBManager = DBManager;
+
+  Accounts.addEventListener('login', function(profile) {
+    debug('ONLOGIN');
+    DBManager.sync();
+  });
+
+  Accounts.addEventListener('logout', function() {
+    DBManager.start();
+  });
+
 })(window);
