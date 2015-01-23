@@ -64,10 +64,10 @@ worker.onfetch = function(e) {
     sessionStore.match(url).then(function(response) {
       if (response) {
         debug('Yay! ' + url + ' is in the session store ' + response);
-        var cloned = response.clone();
+        /*var cloned = response.clone();
         cloned.text().then(function(e) {
           debug(' RESPONSE from session store' + e);
-        });
+        });*/
         return response;
       }
 
@@ -84,7 +84,7 @@ worker.onfetch = function(e) {
           // fetch(e.request) never resolve.
           // e.default() crashes the browser
           // me -> :_(
-          return Promise.resolve();
+          return;
         }
         debug('CACHED response for ' + e.request.url);
         return response;

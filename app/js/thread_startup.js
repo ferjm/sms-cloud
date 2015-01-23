@@ -5,6 +5,7 @@
 'use strict';
 
 var loaded = function() {
+  debug('THREAD STARTUP LOADED');
   MessageManager.init();
   var id = document.location.search.replace('?id=', '');
   if (id) {

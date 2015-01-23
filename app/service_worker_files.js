@@ -1,6 +1,8 @@
 'use strict'
 var kCacheFiles = [
+'bower_components/fxa-relier-client/fxa-relier-client.js',
 'installer.html',
+'js/accounts.js',
 'js/activity_handler.js',
 'js/activity_picker.js',
 'js/api-wrapper/dbmanager.js',
@@ -39,6 +41,8 @@ var kCacheFiles = [
 'js/localization_helper.js',
 'js/message_manager.js',
 'js/messages_list.js',
+'js/mock_content.js',
+'js/mock_updates.js',
 'js/navigation.js',
 'js/notify.js',
 'js/protocols/bridge.js',

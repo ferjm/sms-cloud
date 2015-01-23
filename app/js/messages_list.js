@@ -414,6 +414,7 @@ var ThreadUI = {
    * visible.
    */
   beforeEnter: function thui_beforeEnter(args) {
+    debug('BEFORE ENTER');
     this.setHeaderAction(ActivityHandler.isInActivity() ? 'close' : 'back');
 
     Recipients.View.isFocusable = true;
@@ -446,13 +447,14 @@ var ThreadUI = {
   },
 
   beforeEnterThread: function thui_beforeEnterThread(args) {
+    debug('BEFORE ENTER THREAD');
+
     // TODO should we implement hooks to Navigation so that Threads could
     // get an event whenever the panel changes?
     Threads.currentId = args.id;
 
     var prevPanel = args.meta.prev && args.meta.prev.panel;
 
-    this.session = localStorage.getItem('session');
     if (prevPanel !== 'group-view' &&
         prevPanel !== 'report-view' &&
         !session) {
@@ -503,6 +505,7 @@ var ThreadUI = {
   },
 
   afterEnterThread: function thui_afterEnterThread(args) {
+    debug('AFTER ENTER THREAD');
     var threadId = +args.id;
 
     var prevPanel = args.meta.prev && args.meta.prev.panel;
@@ -1367,6 +1370,17 @@ var ThreadUI = {
 
   // Method for rendering the list of messages using infinite scroll
   renderMessages: function thui_renderMessages(threadId, callback) {
+    var session = localStorage.getItem('session');
+    if (session) {
+      debug('No need to render messages cause we are consuming a stored ' +
+            'session');
+
+      callback && callback();
+      return;
+    } else {
+      debug('NO SESSION FOUND');
+    }
+
     var onMessagesRendered = (function messagesRendered() {
       if (this.messageIndex < this.CHUNK_SIZE) {
         this.showFirstChunk();
@@ -1397,18 +1411,6 @@ var ThreadUI = {
     if (this._stopRenderingNextStep) {
       // we were already asked to stop rendering, before even starting
       return;
-    }
-
-    var session = localStorage.getItem('session');
-    if (session) {
-      debug('No need to render messages cause we are consuming a stored ' +
-            'session' + thui_getThreadInnerHTML());
-
-      var elements = ThreadUI.container.getElementsByClassName('hidden');
-      callback && callback();
-      return;
-    } else {
-      //debug('NO SESSION FOUND. DOCUMENT' + thui_getThreadInnerHTML() + '\n\n\n');
     }
 
     var filter = { threadId: threadId };
