@@ -1,9 +1,9 @@
 (function(exports) {
 
   // Github redirect.
-  const FXA_CLIENT_ID = '313ad9b095026ebb';
+  const FXA_CLIENT_ID = 'cdaad4e82a31b539';
   const FXA_REDIRECT_URI = 'https://ferjm.github.io/sms-cloud/app/list.html';
-  const FXA_NOT_A_SECRET = '32e2b8dbaf760d87dddcbca19ee51de4f2b9e494ef0a05492c793948b2c739e6';
+  const FXA_NOT_A_SECRET = 'a410e44e5bd8e122cd9d01fcd93af8c5478328f3b1fd1a7fb52fc1ccf79da925';
 
   /*
   // Localhost redirect.
