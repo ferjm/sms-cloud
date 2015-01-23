@@ -11,10 +11,6 @@ var loaded = function() {
   if (id) {
     loadThread(id);
   }
-
-  document.querySelector('.view-header').onclick = function() {
-    window.close();
-  };
   window.removeEventListener('load', loaded);
 };
 
@@ -32,6 +28,12 @@ try {
 
 function loadThread(id) {
   var thread;
+  var header = document.querySelector('.view-header');
+  if (header) {
+    header.addEventListener('click', function() {
+      window.close();
+    });
+  }
   ThreadUI.init();
   var iframe = document.getElementById('thread_content');
   var addonApplied = localStorage.getItem('addonApplied');
