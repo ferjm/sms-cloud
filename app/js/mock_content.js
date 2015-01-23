@@ -2,7 +2,7 @@
 
 (function(exports) {
 
-//  localStorage.setItem('mockMode', '1');
+  localStorage.setItem('mockMode', '1');
 
   var enabled = localStorage.mockMode === '1';
 
@@ -43,13 +43,19 @@
      'messages-container').then(() => cb);
   }
 
+  function appendChild(container, child) {
+    return window.setTimeout(function() {
+      container.appendChild(child);
+    });
+
+  }
   function applyMockContentToNode(url, id) {
     return getContent(url).then(function(body) {
       var container = document.getElementById(id);
       container.innerHTML = '';
       var children = body.childNodes;
       for(var i = 0; i < children.length; i++) {
-        container.appendChild(children[i]);
+        appendChild(container, children[i]);
       }
     });
   }
