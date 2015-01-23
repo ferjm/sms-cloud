@@ -304,7 +304,9 @@ var ThreadListUI = {
 
           } else {
             var sms = new BroadcastChannel('sms');
-            sms.postMessage(JSON.stringify(Threads.get(parentThreadId)));
+            var msg = JSON.stringify(Threads.get(parentThreadId));
+            debug('Broadcast ' + msg);
+            sms.postMessage(msg);
           }
         }
 
