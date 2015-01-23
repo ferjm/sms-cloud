@@ -1357,15 +1357,21 @@ var ThreadUI = {
   },
 
   saveSession: function() {
-    if (!window.sessionStoreAPI) {
-      debug('Creating session store for this window');
-      window.sessionStoreAPI = new SessionStoreAPI();
-    }
-
     debug('SAVING SESSION for ' + window.location.href);
-
-    window.sessionStoreAPI.saveSession(window.location.href,
-      thui_getThreadInnerHTML());
+    if (!window.sessionStoreAPI) {
+      navigator.serviceWorker.ready.then(function(registration) {
+        var theWorker = registration.installing ||
+                        registration.active ||
+                        registration.waiting;
+        debug('Creating session store for this window ' + theWorker);
+        window.sessionStoreAPI = new SessionStoreAPI(theWorker);
+        window.sessionStoreAPI.saveSession(window.location.href,
+                                           thui_getThreadInnerHTML());
+      });
+    } else {
+      window.sessionStoreAPI.saveSession(window.location.href,
+                                         thui_getThreadInnerHTML());
+    }
   },
 
   // Method for rendering the list of messages using infinite scroll
