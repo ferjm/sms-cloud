@@ -43,6 +43,12 @@
      'messages-container').then(() => cb);
   }
 
+  function appendChild(container, child) {
+    return window.setTimeout(function() {
+      container.appendChild(child);
+    });
+
+  }
   function applyMockContentToNode(url, id) {
     return getContent(url).then(function(body) {
       var container = document.getElementById(id);
