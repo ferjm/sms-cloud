@@ -47,9 +47,12 @@
     return getContent(url).then(function(body) {
       var container = document.getElementById(id);
       container.innerHTML = '';
-      var children = body.childNodes;
+      var children = body.getElementsByTagName('li');
       for(var i = 0; i < children.length; i++) {
-        container.appendChild(children[i]);
+        window.setTimeout(function(i) {
+          console.debug('adding ', children[i]);
+          container.appendChild(children[i]);
+        }(i));
       }
     });
   }
