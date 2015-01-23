@@ -51,4 +51,4 @@ function loadThread(id) {
   MessageManager.getThreads(options);
 }
 
-window.addEventListener('load', loaded);
+window.addEventListener('DOMContentLoaded', loaded);
