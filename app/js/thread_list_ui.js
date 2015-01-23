@@ -654,11 +654,19 @@ var ThreadListUI = {
 
       debug('Finished rendering threads. Saving session now for ' +
             window.location);
-      if (window.sessionStoreAPI) {
+      if (!window.sessionStoreAPI) {
+        navigator.serviceWorker.ready.then(function(registration) {
+          var theWorker = registration.installing ||
+                          registration.active ||
+                          registration.waiting;
+          debug('Creating session store for this window ' + theWorker);
+          window.sessionStoreAPI = new SessionStoreAPI(theWorker);
+          var markup = document.documentElement.innerHTML;
+          window.sessionStoreAPI.saveSession(window.location.href, markup);
+        });
+      } else {
         var markup = document.documentElement.innerHTML;
         window.sessionStoreAPI.saveSession(window.location.href, markup);
-      } else {
-        debug("No session store yet");
       }
     }
 

@@ -23,14 +23,11 @@ addEventListener('load', function onLoad(e) {
   debug('Registering service worker');
   navigator.serviceWorker.register(kWorkerUrl, kWorkerOptions).then(
     (function onSuccess(worker) {
-      // XXX This should be done automagically by the platform.
-      //     in the meantime let's emulate it.
-      if (!navigator.serviceWorker.current) {
-        navigator.serviceWorker.current = worker;
-      }
-        
+
+      var theWorker = worker.installing || worker.waiting ||
+                      worker.active;
       if (navigator.serviceWorker.controller) {
-        window.sessionStoreAPI = new SessionStoreAPI(worker);
+        window.sessionStoreAPI = new SessionStoreAPI(theWorker);
         //window.updateAPI = new UpdateAPI();
         //window.urlOverladingAPI = new UrlOverloadingAPI();
       } else {

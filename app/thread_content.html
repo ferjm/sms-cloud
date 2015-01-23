@@ -26,6 +26,15 @@
     <link rel="manifest" href="manifest.webapp">
     <link rel="localization" href="locales/sms.{locale}.properties">
 
+    <script src="js/utils.js"></script>
+
+    <script src="js/protocols/protocol_helper.js"></script>
+    <script src="js/sessionstore/api.js"></script>
+
+    <!-- service workers -->
+    <script src="js/sessionstore/api.js"></script>
+    <script src="js/sw-bootstrap.js"></script>
+
     <!-- firefox accounts -->
     <script defer="" src="bower_components/fxa-relier-client/fxa-relier-client.js"></script>
     <script defer="" src="js/accounts.js"></script>
@@ -64,7 +73,6 @@
     <script defer src="js/time_headers.js"></script>
     <script defer src="shared/js/gesture_detector.js"></script>
     <script defer src="shared/js/option_menu.js"></script>
-    <script src="js/utils.js"></script>
     <script defer src="js/settings.js"></script>
     <script defer src="js/subject_composer.js"></script>
     <script defer src="js/attachment.js"></script>
@@ -74,9 +82,6 @@
     <script defer src="js/messages_list.js"></script>
     <script defer src="js/thread_content.js"></script>
     <script defer src="js/app.js"></script>
-
-    <script src="js/protocols/protocol_helper.js"></script>
-    <script src="js/sessionstore/api.js"></script>
   </head>
 
   <body role="application" class="skin-comms theme-communications">
