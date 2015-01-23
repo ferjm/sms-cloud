@@ -1,8 +1,16 @@
 (function(exports) {
 
+  // Github redirect.
   const FXA_CLIENT_ID = '313ad9b095026ebb';
-  const FXA_REDIRECT_URI = 'http://localhost:8000/sms-cloud/app/list.html';
+  const FXA_REDIRECT_URI = 'https://ferjm.github.io/sms-cloud/app/list.html';
   const FXA_NOT_A_SECRET = '32e2b8dbaf760d87dddcbca19ee51de4f2b9e494ef0a05492c793948b2c739e6';
+
+  /*
+  // Localhost redirect.
+  const FXA_CLIENT_ID = '59df2748ee18c38f';
+  const FXA_REDIRECT_URI = 'http://localhost:8000/sms-cloud/app/list.html';
+  const FXA_NOT_A_SECRET = '79efce744db495ac0372297d32a600ee1599ccae0fb822e501dec205accff397';*/
+
   const FXA_OAUTH_HOST = 'https://oauth-stable.dev.lcip.org/v1';
   const FXA_PROFILE_HOST = 'https://stable.dev.lcip.org/profile/v1';
 
@@ -87,6 +95,7 @@
       })
     }).then(function(profile) {
       console.log('PROFILE ' + JSON.stringify(profile));
+      profile.user = profile.email.split('@')[0];
       _profile = profile;
       return profile;
     });
@@ -130,7 +139,7 @@
       }
 
       _setProfile().then(function(profile) {
-        console.log('FXA - Logged as ' + JSON.stringify(profile));
+        debug('FXA - Logged as ' + JSON.stringify(profile));
         _triggerEvent('login', profile);
         localStorage.setItem('account', JSON.stringify(profile));
       });
