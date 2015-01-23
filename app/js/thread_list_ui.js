@@ -304,9 +304,8 @@ var ThreadListUI = {
 
           } else {
             var sms = new BroadcastChannel('sms');
-            var msg = JSON.stringify(Threads.get(parentThreadId));
-            debug('Broadcast ' + msg);
-            sms.postMessage(msg);
+            console.debug('ID ', parentThreadId);
+            sms.postMessage(parentThreadId);
           }
         }
 
@@ -479,7 +478,7 @@ var ThreadListUI = {
       items = [{
         l10nId: 'fxa',
         method: Accounts.signIn
-      }]; 
+      }];
     }
 
     items = items.concat([{
@@ -499,7 +498,7 @@ var ThreadListUI = {
 
     new OptionMenu(params).show();
   },
-  
+
   startEdit: function thlui_edit() {
     function editModeSetup() {
       /*jshint validthis:true */

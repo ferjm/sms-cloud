@@ -23,8 +23,7 @@ try {
   channel.addEventListener('message', function(message) {
     // console.debug('Changing url to ', document.location.href + '?id=' + message.data);
     // document.location = document.location.href + '?id=' + message.data;
-    var thread = JSON.parse(message.data);
-    loadThread(thread.id);
+    loadThread(message.data);
   });
 } catch (e) {
   console.log('BroadcastChannel not available', e);
