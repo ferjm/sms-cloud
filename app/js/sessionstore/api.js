@@ -2,8 +2,8 @@
 
 importScripts('/sms-cloud/app/js/protocols/protocol_helper.js');
 
-function SessionStoreAPI() {
-  this.protocol = new IPDLProtocol('session');
+function SessionStoreAPI(worker) {
+  this.protocol = new IPDLProtocol('session', worker);
   this.protocol.recvSessionSaved = this.onSessionSaved;
 };
 

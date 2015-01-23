@@ -30,7 +30,7 @@ addEventListener('load', function onLoad(e) {
       }
         
       if (navigator.serviceWorker.controller) {
-        window.sessionStoreAPI = new SessionStoreAPI();
+        window.sessionStoreAPI = new SessionStoreAPI(worker);
         //window.updateAPI = new UpdateAPI();
         //window.urlOverladingAPI = new UrlOverloadingAPI();
       } else {
