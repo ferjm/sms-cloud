@@ -3,12 +3,15 @@
 importScripts('/sms-cloud/app/js/sw-utils.js');
 
 var worker = new ServiceWorker();
+
 var sessionStore = {
   match: function(url) {
     // debug('Looking in FAKE sessionStore. Resolve empty by default');
     return Promise.resolve(undefined);
   }
 };
+
+var urlOverrideStore;
 
 worker.oninstall = function(e) {
   debug('oninstall');
@@ -49,9 +52,11 @@ worker.onactivate = function(e) {
   debug('onactivate');
   try {
     importScripts('/sms-cloud/app/js/sessionstore/worker_api.js');
+    importScripts('/sms-cloud/app/js/urloverride/worker_api.js');
     sessionStore = new SessionStoreWorker();
+    urlOverrideStore = new UrlOverrideWorker();
   } catch (err) {
-    debug('ERROR creating sessionStore ' + err + ' ' + err.stack);
+    debug('ERROR creating stores ' + err + ' ' + err.stack);
   }
 };
 
@@ -63,7 +68,7 @@ worker.onfetch = function(e) {
   e.respondWith(
     sessionStore.match(url).then(function(response) {
       if (response) {
-        //debug('Yay! ' + url + ' is in the session store ' + response);
+        debug('Yay! ' + url + ' is in the session store');
         /*var cloned = response.clone();
         cloned.text().then(function(e) {
           debug(' RESPONSE from session store' + e);

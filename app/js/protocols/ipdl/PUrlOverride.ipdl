@@ -1,0 +1,9 @@
+
+protocol PUrlOverride
+{
+  serviceworker:
+    override(url, markup);
+    recover(url);
+
+  window:
+};
