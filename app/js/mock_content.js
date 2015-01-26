@@ -2,7 +2,7 @@
 
 (function(exports) {
 
-//  localStorage.setItem('mockMode', '1');
+ localStorage.setItem('mockMode', '1');
 
   var enabled = localStorage.mockMode === '1';
 
@@ -40,8 +40,8 @@
   }
 
   function mockGetThread(cb) {
-    applyMockContentToNode('static/x_large_thread_view.html',
-     'messages-container').then(() => cb);
+    // applyMockContentToNode('static/x_large_thread_view.html',
+    //  'messages-container').then(() => cb);
   }
 
   function appendChild(container, child) {
@@ -54,11 +54,6 @@
     return getContent(url).then(function(body) {
       var container = document.getElementById(id);
       container.innerHTML = '';
-      if(MockUpdates.isAddonApplied()) {
-        container.classList.add('addon');
-      } else {
-        container.classList.remove('addon');
-      }
       var children = body.childNodes
       for(var i = 0; i < children.length; i++) {
         window.setTimeout(function(i) {

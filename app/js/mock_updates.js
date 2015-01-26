@@ -5,11 +5,12 @@ MockUpdates = {
     window.location.reload();
   },
   applyAddon: function() {
+    console.debug('APPLY ADDON');
     localStorage.setItem('addonApplied', true);
   },
 
   isAddonApplied: function() {
-    return (localStorage.getItem('addonApplied') === true);
+    return (localStorage.getItem('addonApplied') === 'true');
   },
   searchAddons: function() {
     if (MockUpdates.isAddonApplied()) {

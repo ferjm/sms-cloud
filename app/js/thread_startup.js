@@ -36,7 +36,7 @@ function loadThread(id) {
   }
   ThreadUI.init();
   var iframe = document.getElementById('thread_content');
-  var addonApplied = localStorage.getItem('addonApplied');
+  var addonApplied = MockUpdates.isAddonApplied();
   var url = 'thread_content';
   url += addonApplied ? '_addon.html' : '.html';
   iframe.src = url + '?id=' + id;
