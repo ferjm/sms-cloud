@@ -18,10 +18,9 @@
 
     ProviderManager.start();
     EventManager.reset();
+    navigator.mozMobileMessage = this;
     EventManager.addEventListener('messagesSync',
      this.performStaleOperations.bind(this));
-
-    navigator.mozMobileMessage = this;
 
     Accounts.addEventListener('login', function() {
       MultiMobileMessage.sync();
