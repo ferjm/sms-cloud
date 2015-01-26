@@ -59,6 +59,8 @@ var ThreadListUI = {
       this[Utils.camelCase(id)] = document.getElementById(id);
     }, this);
 
+    this.spinner = document.querySelector('.spinner');
+
     this.mainWrapper = document.getElementById('main-wrapper');
 
     // TODO this should probably move to a "WrapperView" class
@@ -119,12 +121,15 @@ var ThreadListUI = {
     Accounts.addEventListener('login', (function(profile) {
       this.showUserInfo(profile);
       this.renderThreads();
+      this.hideSpinner();
     }).bind(this));
 
     Accounts.addEventListener('logout', (function() {
       this.hideUserInfo();
       this.renderThreads();
     }).bind(this));
+
+    this.showSpinner();
   },
 
   showUserInfo: function thlui_showUserInfo(profile) {
@@ -681,6 +686,14 @@ var ThreadListUI = {
     } else {
       MessageManager.getThreads(renderingOptions);
     }
+  },
+
+  showSpinner: function showSpinner() {
+    this.spinner.classList.remove('hide');
+  },
+
+  hideSpinner: function hideSpinner() {
+    this.spinner.classList.add('hide');
   },
 
   createThread: function thlui_createThread(record) {

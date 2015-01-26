@@ -12,6 +12,19 @@ html, body {
   background-color: red;
 }
 
+.spinner {
+  z-index: 9;
+  position: absolute;
+  background-color: white;
+  top: 0;
+  left: 0;
+}
+
+.spinner progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
 
 /* Style for the attachment options menu, mimics style for shared
  * options menu element.
