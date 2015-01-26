@@ -22,6 +22,14 @@
      this.performStaleOperations.bind(this));
 
     navigator.mozMobileMessage = this;
+
+    Accounts.addEventListener('login', function() {
+      MultiMobileMessage.sync();
+    });
+
+    Accounts.addEventListener('logout', function() {
+      MultiMobileMessage.stopSync();
+    });
   };
 
   MultiMobileMessage.stop = function() {
@@ -193,7 +201,8 @@
   MultiMobileMessage.sync = function() {
     // Don't use live long polling sync, since sms wont trigger the events
     // needed to display
-    if (localStorage.mockMode === '1') {
+    if (localStorage.mockMode === '1' ||
+        !Accounts || !Accounts.profile) {
       return;
     }
     clearInterval(syncInterval);

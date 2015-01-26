@@ -119,6 +119,7 @@ var ThreadListUI = {
     }).bind(this));
 
     Accounts.addEventListener('login', (function(profile) {
+      debug('LOGIN');
       this.showUserInfo(profile);
       this.renderThreads();
       this.hideSpinner();
@@ -129,7 +130,7 @@ var ThreadListUI = {
       this.renderThreads();
     }).bind(this));
 
-    this.showSpinner();
+    this.setEmpty(true);
   },
 
   showUserInfo: function thlui_showUserInfo(profile) {
@@ -474,6 +475,7 @@ var ThreadListUI = {
   showOptions: function thlui_options() {
     var items;
 
+    var self = this;
     if (Accounts.profile) {
       items = [{
       l10nId: 'fxa-signout',
@@ -482,7 +484,10 @@ var ThreadListUI = {
     } else {
       items = [{
         l10nId: 'fxa',
-        method: Accounts.signIn
+        method: function() {
+          self.showSpinner();
+          Accounts.signIn();
+        }
       }];
     }
 
@@ -579,7 +584,7 @@ var ThreadListUI = {
   },
 
   startRendering: function thlui_startRenderingThreads() {
-    this.setEmpty(false);
+    //this.setEmpty(false);
   },
 
   finalizeRendering: function thlui_finalizeRendering(empty) {
@@ -639,6 +644,7 @@ var ThreadListUI = {
     }
 
     function onThreadsRendered(hasMockedThreads) {
+      debug('onThreadsRendered ' + hasThreads);
       /* jshint validthis: true */
 
       /* We set the view as empty only if there's no threads and no drafts,
@@ -646,7 +652,7 @@ var ThreadListUI = {
       if (MockContent.enabled) {
         this.finalizeRendering(!hasMockedThreads);
       } else {
-        this.finalizeRendering(!(hasThreads || Drafts.size));
+        this.finalizeRendering(!hasThreads);
       }
 
       if (firstPanelCount > 0) {

@@ -19,7 +19,7 @@
 
   DBManager.start = function(user) {
     if (!user) {
-      user = '';
+      user = '_nouser';
     } else {
       user = '_' + user;
     }
@@ -232,6 +232,10 @@
   };
 
   DBManager.sync = function() {
+    if (!Accounts || !Accounts.profile) {
+      debug('NO USER - NO SYNC');
+      return;
+    }
     ensureDB();
     var EXTERNAL_DB_HOST = 'https://sms-cloud.iriscouch.com/';
 
