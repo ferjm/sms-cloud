@@ -10,7 +10,8 @@
 // data handled per each session so we can quickly render them when needed.
 //
 addEventListener('load', function onLoad(e) {
-  if (localStorage.mockMode === '1') {
+  var mock = localStorage.getItem('mockMode');
+  if (mock === '1') {
     debug('MOCK mode - no service worker');
     return;
   }
@@ -28,7 +29,11 @@ addEventListener('load', function onLoad(e) {
                       worker.active;
       if (navigator.serviceWorker.controller) {
         window.sessionStoreAPI = new SessionStoreAPI(theWorker);
-        window.urlOverrideAPI = new UrlOverrideAPI(theWorker);
+        try {
+          window.urlOverrideAPI = new UrlOverrideAPI(theWorker);
+        } catch(e) {
+          debug('CRAP ' + document.location.href + e);
+        }
         //window.updateAPI = new UpdateAPI();
       } else {
         //debug('Need to reload');

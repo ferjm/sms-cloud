@@ -28,7 +28,6 @@
     threadsDBName = 'threads' + user;
 
     if (!dbPool[user]) {
-      debug('Starting DBMANAGER for user ' + user);
       dbPool[user] = {
         messages: new PouchDB(messagesDBName),
         threads: new PouchDB(threadsDBName)

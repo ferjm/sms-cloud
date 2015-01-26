@@ -58,3 +58,15 @@ UrlOverrideWorker.prototype.recover = function(resolve, reject, args) {
     reject();
   });
 };
+
+UrlOverrideWorker.prototype.match = function(url) { 
+  url = normalizeUrl(url);
+  return caches.open(URL_OVERRIDE_STORE).then(function(cache) {
+    return cache.match(url).then(function(response) {
+      if (!response) {
+        return Promise.reject();
+      }
+      return response;
+    });
+  });
+}

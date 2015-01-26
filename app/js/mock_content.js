@@ -2,7 +2,7 @@
 
 (function(exports) {
 
-  localStorage.setItem('mockMode', '1');
+  // localStorage.setItem('mockMode', '1');
 
   var enabled = localStorage.mockMode === '1';
 

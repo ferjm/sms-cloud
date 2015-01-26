@@ -6,9 +6,9 @@ function UrlOverrideAPI(worker) {
   this.protocol = new IPDLProtocol('urloverride', worker);
 };
 
-UrlOverrideAPI.prototype.override = function(url, content) {
+UrlOverrideAPI.prototype.override = function(url, content, contentType) {
   debug('Sending override for ' + url);
-  return this.protocol.sendOverride(url, content);
+  return this.protocol.sendOverride(url, content, contentType);
 };
 
 UrlOverrideAPI.prototype.recover = function(url) {

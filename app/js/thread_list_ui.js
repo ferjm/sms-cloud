@@ -481,9 +481,11 @@ var ThreadListUI = {
       }];
     }
 
+    var addons = (localStorage.mockMode == '1') ?
+                 MockUpdates : Addons;
     items = items.concat([{
       l10nId: 'search-addons',
-      method: MockUpdates.searchAddons
+      method: addons.searchAddons
     },{
       l10nId: 'search-updates',
       method: MockUpdates.searchUpdates

@@ -52,6 +52,11 @@ SessionStoreWorker.prototype.match = function(url) {
   url = normalizeUrl(url);
   // debug('Looking for ' + url + ' in session store');
   return caches.open(SESSION_STORE).then(function(cache) {
-    return cache.match(url);
+    return cache.match(url).then(function(response) {
+      if (!response) {
+        return Promise.reject();
+      }
+      return response;
+    });
   });
 }
