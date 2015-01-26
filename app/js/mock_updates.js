@@ -7,7 +7,15 @@ MockUpdates = {
   applyAddon: function() {
     localStorage.setItem('addonApplied', true);
   },
+
+  isAddonApplied: function() {
+    return (localStorage.getItem('addonApplied') === true);
+  },
   searchAddons: function() {
+    if (MockUpdates.isAddonApplied()) {
+      localStorage.setItem('addonApplied', false);
+      return;
+    }
     var params = {
       header: 'Addons found',
       items: [{

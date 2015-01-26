@@ -54,10 +54,14 @@
     return getContent(url).then(function(body) {
       var container = document.getElementById(id);
       container.innerHTML = '';
-      var children = body.getElementsByTagName('li');
+      if(MockUpdates.isAddonApplied()) {
+        container.classList.add('addon');
+      } else {
+        container.classList.remove('addon');
+      }
+      var children = body.childNodes
       for(var i = 0; i < children.length; i++) {
         window.setTimeout(function(i) {
-          console.debug('adding ', children[i]);
           container.appendChild(children[i]);
         }(i));
       }
