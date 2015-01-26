@@ -20,6 +20,7 @@
   DBManager.start = function(user) {
     if (!user) {
       user = '_nouser';
+      return;
     } else {
       user = '_' + user;
     }
