@@ -25,6 +25,7 @@
   }
 
   function mockGetThreads(renderingOptions) {
+    ThreadListUI.hideSpinner();
     if (Accounts.profile && accountContent[Accounts.profile.email]) {
       var content = accountContent[Accounts.profile.email];
       applyMockContentToNode(content,
