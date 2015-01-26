@@ -28,8 +28,8 @@ addEventListener('load', function onLoad(e) {
                       worker.active;
       if (navigator.serviceWorker.controller) {
         window.sessionStoreAPI = new SessionStoreAPI(theWorker);
-        window.urlOverrideAPI = new UrlOverrideAPI(theWorker);
         //window.updateAPI = new UpdateAPI();
+        //window.urlOverladingAPI = new UrlOverloadingAPI();
       } else {
         //debug('Need to reload');
         //doSoftReload();
