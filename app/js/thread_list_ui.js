@@ -118,11 +118,14 @@ var ThreadListUI = {
       this.renderThreads();
     }).bind(this));
 
-    Accounts.addEventListener('login', (function(profile) {
-      debug('LOGIN');
-      this.showUserInfo(profile);
+    Accounts.addEventListener('startlogin', (function() {
       this.showSpinner();
-      this.renderThreads(this.hideSpinner.bind(this));
+    }).bind(this));
+
+    Accounts.addEventListener('login', (function(profile) {
+      this.showUserInfo(profile);
+      this.renderThreads();
+      this.hideSpinner();
     }).bind(this));
 
     Accounts.addEventListener('logout', (function() {

@@ -66,6 +66,8 @@
       return Promise.reject();
     }
 
+    _triggerEvent('startlogin', {});
+
     // XXX: fxaRelierClient.token.tradeCode doesn't work :(
     //      so we need to do the requests manually.
     return _request({
