@@ -121,8 +121,8 @@ var ThreadListUI = {
     Accounts.addEventListener('login', (function(profile) {
       debug('LOGIN');
       this.showUserInfo(profile);
-      this.renderThreads();
-      this.hideSpinner();
+      this.showSpinner();
+      this.renderThreads(this.hideSpinner.bind(this));
     }).bind(this));
 
     Accounts.addEventListener('logout', (function() {
