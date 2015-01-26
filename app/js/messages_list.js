@@ -837,7 +837,7 @@ var ThreadUI = {
     // Scroll to bottom
     this.scrollViewToBottom();
     // Make sure the caret in the "Compose" area is visible
-    Compose.scrollMessageContent();
+    //Compose.scrollMessageContent();
   },
 
   // Create a recipient from contacts activity.
